@@ -35,12 +35,13 @@ export function SessionScreen({ session, setSession }: Props) {
     return () => stopCamera()
   }, [startCamera, stopCamera])
 
-  // Send live preview to partner - direct approach without image loading
+  // Send live preview to partner
   useEffect(() => {
-    if (!session.sessionCode || isSoloMode || status !== 'active') return
-    if (!videoRef.current) return
+    if (!session.sessionCode || isSoloMode) return
+    // Don't check videoRef.current here - let the interval handle it
 
     const sendPreview = () => {
+      // Check video readiness inside the interval
       const video = videoRef.current
       if (!video || video.readyState < 2) return
 
@@ -50,7 +51,6 @@ export function SessionScreen({ session, setSession }: Props) {
         canvas.height = 120
         const ctx = canvas.getContext('2d')
         if (ctx) {
-          // Flip horizontally to match the mirrored video
           ctx.scale(-1, 1)
           ctx.drawImage(video, -160, 0, 160, 120)
           const compressed = canvas.toDataURL('image/jpeg', 0.4)
@@ -58,15 +58,14 @@ export function SessionScreen({ session, setSession }: Props) {
           set(ref(database, `sessions/${session.sessionCode}/${previewKey}`), compressed)
         }
       } catch (e) {
-        console.error('Preview error:', e)
+        // Silently ignore errors
       }
     }
 
-    // Send immediately and then every 200ms
-    sendPreview()
-    const interval = setInterval(sendPreview, 200)
+    // Start interval immediately - sendPreview will check if video is ready
+    const interval = setInterval(sendPreview, 250)
     return () => clearInterval(interval)
-  }, [session.sessionCode, session.role, isSoloMode, status, videoRef])
+  }, [session.sessionCode, session.role, isSoloMode])
 
   // Listen for partner's preview
   useEffect(() => {
