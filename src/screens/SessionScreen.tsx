@@ -1,6 +1,7 @@
 import type { AppSession, SessionData } from '../types'
 import { useEffect, useState, useRef } from 'react'
 import { useCamera } from '../hooks/useCamera'
+import { useWebRTC } from '../hooks/useWebRTC'
 import { ref, onValue, set } from 'firebase/database'
 import { database } from '../lib/firebase'
 
@@ -14,13 +15,20 @@ const SHOTS_COUNT = 4
 const PAUSE_BETWEEN_SHOTS = 1000
 
 export function SessionScreen({ session, setSession }: Props) {
-  const { videoRef, status, startCamera, stopCamera, captureFrame } = useCamera()
+  const { videoRef, stream, status, startCamera, stopCamera, captureFrame } = useCamera()
   const [sessionData, setSessionData] = useState<SessionData | null>(null)
   const [isReady, setIsReady] = useState(false)
   const [countdown, setCountdown] = useState<number | null>(null)
   const [currentShot, setCurrentShot] = useState(0)
   const [localPhotos, setLocalPhotos] = useState<string[]>([])
-  const [partnerPreview, setPartnerPreview] = useState<string | null>(null)
+
+  // WebRTC for real-time partner video
+  const { remoteStream, state: webrtcState } = useWebRTC(
+    session.sessionCode,
+    session.role,
+    stream
+  )
+  const partnerVideoRef = useRef<HTMLVideoElement | null>(null)
 
   // Use Set to track which shots have been captured - bulletproof against duplicates
   const capturedShotsSet = useRef(new Set<number>())
@@ -35,53 +43,12 @@ export function SessionScreen({ session, setSession }: Props) {
     return () => stopCamera()
   }, [startCamera, stopCamera])
 
-  // Send live preview to partner
+  // Attach remote stream to partner video element
   useEffect(() => {
-    if (!session.sessionCode || isSoloMode) return
-    // Don't check videoRef.current here - let the interval handle it
-
-    const sendPreview = () => {
-      // Check video readiness inside the interval
-      const video = videoRef.current
-      if (!video || video.readyState < 2) return
-
-      try {
-        const canvas = document.createElement('canvas')
-        canvas.width = 160
-        canvas.height = 120
-        const ctx = canvas.getContext('2d')
-        if (ctx) {
-          ctx.scale(-1, 1)
-          ctx.drawImage(video, -160, 0, 160, 120)
-          const compressed = canvas.toDataURL('image/jpeg', 0.4)
-          const previewKey = session.role === 'host' ? 'hostPreview' : 'guestPreview'
-          set(ref(database, `sessions/${session.sessionCode}/${previewKey}`), compressed)
-        }
-      } catch (e) {
-        // Silently ignore errors
-      }
+    if (partnerVideoRef.current && remoteStream) {
+      partnerVideoRef.current.srcObject = remoteStream
     }
-
-    // Start interval immediately - sendPreview will check if video is ready
-    const interval = setInterval(sendPreview, 250)
-    return () => clearInterval(interval)
-  }, [session.sessionCode, session.role, isSoloMode])
-
-  // Listen for partner's preview
-  useEffect(() => {
-    if (!session.sessionCode || isSoloMode) return
-
-    const partnerKey = session.role === 'host' ? 'guestPreview' : 'hostPreview'
-    const previewRef = ref(database, `sessions/${session.sessionCode}/${partnerKey}`)
-
-    const unsubscribe = onValue(previewRef, (snapshot) => {
-      if (snapshot.exists()) {
-        setPartnerPreview(snapshot.val())
-      }
-    })
-
-    return () => unsubscribe()
-  }, [session.sessionCode, session.role, isSoloMode])
+  }, [remoteStream])
 
   // Listen for session updates
   useEffect(() => {
@@ -302,17 +269,18 @@ export function SessionScreen({ session, setSession }: Props) {
             </div>
           </div>
 
-          {/* Partner's camera */}
+          {/* Partner's camera via WebRTC */}
           <div className="relative flex-1 aspect-[4/3] bg-gray-900 rounded-lg overflow-hidden">
-            {partnerPreview ? (
-              <img
-                src={partnerPreview}
-                alt="partner"
-                className="absolute inset-0 w-full h-full object-cover"
-              />
-            ) : (
-              <div className="absolute inset-0 flex items-center justify-center text-white/40 text-sm">
-                waiting for partner...
+            <video
+              ref={partnerVideoRef}
+              autoPlay
+              playsInline
+              muted
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+            {webrtcState !== 'connected' && (
+              <div className="absolute inset-0 flex items-center justify-center text-white/40 text-sm bg-gray-900">
+                {webrtcState === 'connecting' ? 'connecting...' : 'waiting for partner...'}
               </div>
             )}
             <div className="absolute bottom-3 left-1/2 -translate-x-1/2 text-white text-xs bg-black/60 px-3 py-1 rounded-full">

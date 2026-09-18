@@ -8,6 +8,7 @@ const RETRY_DELAY = 500
 export function useCamera() {
   const [status, setStatus] = useState<CameraStatus>('idle')
   const [error, setError] = useState<string | null>(null)
+  const [stream, setStream] = useState<MediaStream | null>(null)
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const retryCountRef = useRef(0)
@@ -17,6 +18,7 @@ export function useCamera() {
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((track) => track.stop())
       streamRef.current = null
+      setStream(null)
     }
     if (videoRef.current) {
       videoRef.current.srcObject = null
@@ -58,6 +60,7 @@ export function useCamera() {
         }
 
         streamRef.current = stream
+        setStream(stream)
 
         if (videoRef.current) {
           videoRef.current.srcObject = stream
@@ -135,6 +138,7 @@ export function useCamera() {
               }
 
               streamRef.current = stream
+              setStream(stream)
               if (videoRef.current) {
                 videoRef.current.srcObject = stream
                 await videoRef.current.play()
@@ -185,6 +189,7 @@ export function useCamera() {
 
   return {
     videoRef,
+    stream,
     status,
     error,
     startCamera,
