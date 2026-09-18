@@ -11,7 +11,10 @@
       "Bash(lsof:*)",
       "Bash(git credential-osxkeychain:*)",
       "Bash(printf:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push)"
     ]
   }
 }
