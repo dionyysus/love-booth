@@ -60,6 +60,17 @@ export function SessionScreen({ session, setSession }: Props) {
             localPhotos: localPhotos,
           }))
         }
+
+        // If both ready and we're host and not yet capturing, start capture
+        if (
+          session.role === 'host' &&
+          parsed.hostReady &&
+          parsed.guestReady &&
+          parsed.status === 'waiting' &&
+          !isCapturingRef.current
+        ) {
+          startCaptureSequence(parsed)
+        }
       }
     })
 
