@@ -1,7 +1,7 @@
 import type { AppSession, SessionData } from '../types'
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { useCamera } from '../hooks/useCamera'
-import { ref, onValue, set, update } from 'firebase/database'
+import { ref, onValue, set } from 'firebase/database'
 import { database } from '../lib/firebase'
 
 type Props = {
@@ -11,7 +11,7 @@ type Props = {
 
 const COUNTDOWN_SECONDS = 3
 const SHOTS_COUNT = 4
-const PAUSE_BETWEEN_SHOTS = 2000
+const PAUSE_BETWEEN_SHOTS = 1000
 
 export function SessionScreen({ session, setSession }: Props) {
   const { videoRef, status, startCamera, stopCamera, captureFrame } = useCamera()
@@ -42,13 +42,9 @@ export function SessionScreen({ session, setSession }: Props) {
         const parsed: SessionData = snapshot.val()
         setSessionData(parsed)
 
-        // Check if both ready and start countdown
-        if (parsed.hostReady && parsed.guestReady && parsed.countdown !== null) {
-          setCountdown(parsed.countdown)
-        }
-
-        // Check if capturing
+        // Update countdown and shot during capture
         if (parsed.status === 'capturing') {
+          setCountdown(parsed.countdown)
           setCurrentShot(parsed.currentShot)
         }
 
@@ -57,7 +53,7 @@ export function SessionScreen({ session, setSession }: Props) {
           setSession((s) => ({
             ...s,
             screen: 'result',
-            localPhotos: localPhotos,
+            localPhotos: capturedPhotosRef.current,
           }))
         }
 
@@ -75,7 +71,7 @@ export function SessionScreen({ session, setSession }: Props) {
     })
 
     return () => unsubscribe()
-  }, [session.sessionCode, session.role, setSession, localPhotos, isSoloMode])
+  }, [session.sessionCode, session.role, setSession, isSoloMode])
 
   // Handle ready button
   const handleReady = async () => {
@@ -214,19 +210,10 @@ export function SessionScreen({ session, setSession }: Props) {
       const photo = captureFrame()
       if (photo) {
         setLocalPhotos((prev) => [...prev, photo])
-
-        // Store photo in session
-        if (session.sessionCode && sessionData) {
-          const photoKey = session.role === 'host' ? 'hostPhotos' : 'guestPhotos'
-          const sessionRef = ref(database, `sessions/${session.sessionCode}`)
-          update(sessionRef, {
-            [photoKey]: [...(sessionData[photoKey] || []), photo],
-            lastUpdate: Date.now(),
-          })
-        }
+        capturedPhotosRef.current.push(photo)
       }
     }
-  }, [countdown, status, captureFrame, session.sessionCode, session.role, sessionData])
+  }, [countdown, status, captureFrame])
 
   const bothReady = sessionData?.hostReady && sessionData?.guestReady
   const isCapturing = countdown !== null
