@@ -20,8 +20,10 @@ export function SessionScreen({ session, setSession }: Props) {
   const [countdown, setCountdown] = useState<number | null>(null)
   const [currentShot, setCurrentShot] = useState(0)
   const [localPhotos, setLocalPhotos] = useState<string[]>([])
+  const [partnerPreview, setPartnerPreview] = useState<string | null>(null)
   const isCapturingRef = useRef(false)
   const capturedPhotosRef = useRef<string[]>([])
+  const previewIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
   const isSoloMode = session.sessionCode === 'solo'
 
@@ -30,6 +32,31 @@ export function SessionScreen({ session, setSession }: Props) {
     startCamera()
     return () => stopCamera()
   }, [startCamera, stopCamera])
+
+  // Send preview frames to partner (skip in solo mode)
+  useEffect(() => {
+    if (!session.sessionCode || isSoloMode || status !== 'active') return
+
+    const sendPreview = () => {
+      const preview = captureFrame()
+      if (preview && sessionData) {
+        const previewKey = session.role === 'host' ? 'hostPreview' : 'guestPreview'
+        const sessionRef = ref(database, `sessions/${session.sessionCode}`)
+        update(sessionRef, {
+          [previewKey]: preview,
+        })
+      }
+    }
+
+    // Send preview every 500ms
+    previewIntervalRef.current = setInterval(sendPreview, 500)
+
+    return () => {
+      if (previewIntervalRef.current) {
+        clearInterval(previewIntervalRef.current)
+      }
+    }
+  }, [session.sessionCode, session.role, isSoloMode, status, captureFrame, sessionData])
 
   // Listen for session updates (skip in solo mode)
   useEffect(() => {
@@ -40,6 +67,12 @@ export function SessionScreen({ session, setSession }: Props) {
       if (snapshot.exists()) {
         const parsed: SessionData = snapshot.val()
         setSessionData(parsed)
+
+        // Update partner preview
+        const partnerPreviewKey = session.role === 'host' ? 'guestPreview' : 'hostPreview'
+        if (parsed[partnerPreviewKey]) {
+          setPartnerPreview(parsed[partnerPreviewKey])
+        }
 
         // Check if both ready and start countdown
         if (parsed.hostReady && parsed.guestReady && parsed.countdown !== null) {
@@ -63,7 +96,7 @@ export function SessionScreen({ session, setSession }: Props) {
     })
 
     return () => unsubscribe()
-  }, [session.sessionCode, setSession, localPhotos, isSoloMode])
+  }, [session.sessionCode, session.role, setSession, localPhotos, isSoloMode])
 
   // Handle ready button
   const handleReady = async () => {
@@ -238,15 +271,51 @@ export function SessionScreen({ session, setSession }: Props) {
       )}
 
       {/* Camera preview */}
-      <div className="relative w-full max-w-4xl aspect-[16/9] bg-gray-900 rounded-lg overflow-hidden mb-8">
-        <video
-          ref={videoRef}
-          autoPlay
-          playsInline
-          muted
-          className="absolute inset-0 w-full h-full object-cover scale-x-[-1]"
-        />
-      </div>
+      {isSoloMode ? (
+        <div className="relative w-full max-w-4xl aspect-[16/9] bg-gray-900 rounded-lg overflow-hidden mb-8">
+          <video
+            ref={videoRef}
+            autoPlay
+            playsInline
+            muted
+            className="absolute inset-0 w-full h-full object-cover scale-x-[-1]"
+          />
+        </div>
+      ) : (
+        <div className="relative w-full max-w-6xl mb-8 flex gap-4">
+          {/* Your camera */}
+          <div className="relative flex-1 aspect-[4/3] bg-gray-900 rounded-lg overflow-hidden">
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              muted
+              className="absolute inset-0 w-full h-full object-cover scale-x-[-1]"
+            />
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white text-xs font-light tracking-wide bg-black/50 px-3 py-1 rounded">
+              you
+            </div>
+          </div>
+
+          {/* Partner's camera */}
+          <div className="relative flex-1 aspect-[4/3] bg-gray-900 rounded-lg overflow-hidden">
+            {partnerPreview ? (
+              <img
+                src={partnerPreview}
+                alt="partner"
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center text-white/30 text-sm">
+                waiting for partner...
+              </div>
+            )}
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white text-xs font-light tracking-wide bg-black/50 px-3 py-1 rounded">
+              partner
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Ready button */}
       {!bothReady && !isCapturing && (

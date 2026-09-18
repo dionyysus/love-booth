@@ -10,7 +10,8 @@
       "WebFetch(domain:teaastudio.pages.dev)",
       "Bash(lsof:*)",
       "Bash(git credential-osxkeychain:*)",
-      "Bash(printf:*)"
+      "Bash(printf:*)",
+      "Bash(curl:*)"
     ]
   }
 }

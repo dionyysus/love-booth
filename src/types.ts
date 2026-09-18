@@ -18,6 +18,8 @@ export type SessionData = {
   currentShot: number
   hostPhotos: string[]
   guestPhotos: string[]
+  hostPreview?: string
+  guestPreview?: string
   status: 'waiting' | 'ready' | 'capturing' | 'complete'
   createdAt: number
   lastUpdate: number
