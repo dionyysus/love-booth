@@ -21,9 +21,11 @@ export function SessionScreen({ session, setSession }: Props) {
   const [currentShot, setCurrentShot] = useState(0)
   const [localPhotos, setLocalPhotos] = useState<string[]>([])
   const [partnerPreview, setPartnerPreview] = useState<string | null>(null)
-  const isCapturingRef = useRef(false)
+
+  // Use Set to track which shots have been captured - bulletproof against duplicates
+  const capturedShotsSet = useRef(new Set<number>())
   const capturedPhotosRef = useRef<string[]>([])
-  const lastCapturedShotRef = useRef<number>(-1)
+  const isCapturingRef = useRef(false)
 
   const isSoloMode = session.sessionCode === 'solo'
 
@@ -33,33 +35,38 @@ export function SessionScreen({ session, setSession }: Props) {
     return () => stopCamera()
   }, [startCamera, stopCamera])
 
-  // Send live preview to partner
+  // Send live preview to partner - direct approach without image loading
   useEffect(() => {
     if (!session.sessionCode || isSoloMode || status !== 'active') return
+    if (!videoRef.current) return
 
     const sendPreview = () => {
-      const frame = captureFrame()
-      if (frame) {
+      const video = videoRef.current
+      if (!video || video.readyState < 2) return
+
+      try {
         const canvas = document.createElement('canvas')
-        const img = new Image()
-        img.onload = () => {
-          canvas.width = 120
-          canvas.height = 90
-          const ctx = canvas.getContext('2d')
-          if (ctx) {
-            ctx.drawImage(img, 0, 0, 120, 90)
-            const compressed = canvas.toDataURL('image/jpeg', 0.3)
-            const previewKey = session.role === 'host' ? 'hostPreview' : 'guestPreview'
-            set(ref(database, `sessions/${session.sessionCode}/${previewKey}`), compressed)
-          }
+        canvas.width = 160
+        canvas.height = 120
+        const ctx = canvas.getContext('2d')
+        if (ctx) {
+          // Flip horizontally to match the mirrored video
+          ctx.scale(-1, 1)
+          ctx.drawImage(video, -160, 0, 160, 120)
+          const compressed = canvas.toDataURL('image/jpeg', 0.4)
+          const previewKey = session.role === 'host' ? 'hostPreview' : 'guestPreview'
+          set(ref(database, `sessions/${session.sessionCode}/${previewKey}`), compressed)
         }
-        img.src = frame
+      } catch (e) {
+        console.error('Preview error:', e)
       }
     }
 
-    const interval = setInterval(sendPreview, 300)
+    // Send immediately and then every 200ms
+    sendPreview()
+    const interval = setInterval(sendPreview, 200)
     return () => clearInterval(interval)
-  }, [session.sessionCode, session.role, isSoloMode, status, captureFrame])
+  }, [session.sessionCode, session.role, isSoloMode, status, videoRef])
 
   // Listen for partner's preview
   useEffect(() => {
@@ -88,8 +95,8 @@ export function SessionScreen({ session, setSession }: Props) {
         setSessionData(parsed)
 
         if (parsed.status === 'capturing') {
-          setCountdown(parsed.countdown)
-          setCurrentShot(parsed.currentShot)
+          setCountdown(parsed.countdown ?? null)
+          setCurrentShot(parsed.currentShot ?? 0)
         }
 
         if (parsed.status === 'complete') {
@@ -105,7 +112,7 @@ export function SessionScreen({ session, setSession }: Props) {
     return () => unsubscribe()
   }, [session.sessionCode, isSoloMode, setSession])
 
-  // START CAPTURE - This triggers when both are ready (HOST ONLY)
+  // START CAPTURE - HOST ONLY triggers when both ready
   useEffect(() => {
     if (isSoloMode) return
     if (session.role !== 'host') return
@@ -114,12 +121,11 @@ export function SessionScreen({ session, setSession }: Props) {
     if (sessionData.status !== 'waiting') return
     if (isCapturingRef.current) return
 
-    // Both ready! Start capture sequence
-    const runCapture = async () => {
-      isCapturingRef.current = true
-      capturedPhotosRef.current = []
-      lastCapturedShotRef.current = -1
+    isCapturingRef.current = true
+    capturedPhotosRef.current = []
+    capturedShotsSet.current.clear()
 
+    const runCapture = async () => {
       const sessionRef = ref(database, `sessions/${session.sessionCode}`)
 
       for (let shot = 0; shot < SHOTS_COUNT; shot++) {
@@ -135,7 +141,7 @@ export function SessionScreen({ session, setSession }: Props) {
           await new Promise(r => setTimeout(r, 1000))
         }
 
-        // Capture moment (countdown = 0)
+        // Capture moment
         await set(sessionRef, {
           ...sessionData,
           countdown: 0,
@@ -144,14 +150,15 @@ export function SessionScreen({ session, setSession }: Props) {
           lastUpdate: Date.now(),
         })
 
-        await new Promise(r => setTimeout(r, 500))
+        // Wait for capture to happen
+        await new Promise(r => setTimeout(r, 600))
 
         if (shot < SHOTS_COUNT - 1) {
           await new Promise(r => setTimeout(r, PAUSE_BETWEEN_SHOTS))
         }
       }
 
-      // Done!
+      // Done
       await set(sessionRef, {
         ...sessionData,
         countdown: null,
@@ -166,47 +173,52 @@ export function SessionScreen({ session, setSession }: Props) {
     runCapture()
   }, [sessionData, session.role, session.sessionCode, isSoloMode])
 
-  // Capture photo when countdown hits 0
+  // Capture photo when countdown hits 0 - BULLETPROOF version
   useEffect(() => {
     if (countdown !== 0) return
     if (status !== 'active') return
-    if (currentShot === lastCapturedShotRef.current) return
 
-    lastCapturedShotRef.current = currentShot
+    // CRITICAL: Check if we already captured this shot
+    if (capturedShotsSet.current.has(currentShot)) {
+      return
+    }
+
+    // Mark as captured IMMEDIATELY before doing anything else
+    capturedShotsSet.current.add(currentShot)
+
     const photo = captureFrame()
+    if (!photo) return
 
-    if (photo) {
-      capturedPhotosRef.current.push(photo)
-      setLocalPhotos(prev => [...prev, photo])
+    capturedPhotosRef.current.push(photo)
+    setLocalPhotos([...capturedPhotosRef.current])
 
-      // Upload to Firebase for partner
-      if (session.sessionCode && !isSoloMode) {
-        const photoKey = session.role === 'host' ? 'hostPhotos' : 'guestPhotos'
+    // Upload compressed photo to Firebase for partner
+    if (session.sessionCode && !isSoloMode) {
+      const photoKey = session.role === 'host' ? 'hostPhotos' : 'guestPhotos'
+      const video = videoRef.current
+      if (video) {
         const canvas = document.createElement('canvas')
-        const img = new Image()
-        img.onload = () => {
-          canvas.width = 200
-          canvas.height = 250
-          const ctx = canvas.getContext('2d')
-          if (ctx) {
-            ctx.drawImage(img, 0, 0, 200, 250)
-            const compressed = canvas.toDataURL('image/jpeg', 0.5)
-            set(ref(database, `sessions/${session.sessionCode}/${photoKey}/${currentShot}`), compressed)
-          }
+        canvas.width = 200
+        canvas.height = 250
+        const ctx = canvas.getContext('2d')
+        if (ctx) {
+          ctx.scale(-1, 1)
+          ctx.drawImage(video, -200, 0, 200, 250)
+          const compressed = canvas.toDataURL('image/jpeg', 0.5)
+          set(ref(database, `sessions/${session.sessionCode}/${photoKey}/${currentShot}`), compressed)
         }
-        img.src = photo
       }
     }
-  }, [countdown, status, currentShot, captureFrame, session.sessionCode, session.role, isSoloMode])
+  }, [countdown, status, currentShot, captureFrame, session.sessionCode, session.role, isSoloMode, videoRef])
 
   // Handle ready button
   const handleReady = async () => {
     setIsReady(true)
 
     if (isSoloMode) {
-      // Solo capture
       isCapturingRef.current = true
       capturedPhotosRef.current = []
+      capturedShotsSet.current.clear()
 
       for (let shot = 0; shot < SHOTS_COUNT; shot++) {
         setCurrentShot(shot)
@@ -215,12 +227,12 @@ export function SessionScreen({ session, setSession }: Props) {
           await new Promise(r => setTimeout(r, 1000))
         }
         setCountdown(0)
-        await new Promise(r => setTimeout(r, 100))
+        await new Promise(r => setTimeout(r, 150))
 
         const photo = captureFrame()
         if (photo) {
           capturedPhotosRef.current.push(photo)
-          setLocalPhotos(prev => [...prev, photo])
+          setLocalPhotos([...capturedPhotosRef.current])
         }
 
         setCountdown(null)
@@ -264,7 +276,7 @@ export function SessionScreen({ session, setSession }: Props) {
         </div>
       )}
 
-      {/* Camera preview - SIDE BY SIDE for paired mode */}
+      {/* Camera preview */}
       {isSoloMode ? (
         <div className="relative w-full max-w-4xl aspect-[16/9] bg-gray-900 rounded-lg overflow-hidden mb-8">
           <video
@@ -276,9 +288,9 @@ export function SessionScreen({ session, setSession }: Props) {
           />
         </div>
       ) : (
-        <div className="w-full max-w-5xl mb-6 flex gap-3">
+        <div className="w-full max-w-5xl mb-6 flex gap-4">
           {/* Your camera */}
-          <div className="relative flex-1 aspect-[4/3] bg-gray-800 rounded-lg overflow-hidden">
+          <div className="relative flex-1 aspect-[4/3] bg-gray-900 rounded-lg overflow-hidden">
             <video
               ref={videoRef}
               autoPlay
@@ -292,7 +304,7 @@ export function SessionScreen({ session, setSession }: Props) {
           </div>
 
           {/* Partner's camera */}
-          <div className="relative flex-1 aspect-[4/3] bg-gray-800 rounded-lg overflow-hidden">
+          <div className="relative flex-1 aspect-[4/3] bg-gray-900 rounded-lg overflow-hidden">
             {partnerPreview ? (
               <img
                 src={partnerPreview}
