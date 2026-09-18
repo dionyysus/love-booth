@@ -24,43 +24,61 @@ export function LandingScreen({ setSession }: Props) {
       currentShot: 0,
       hostPhotos: [],
       guestPhotos: [],
-      status: 'waiting',
+      hostPreview: '',
+      guestPreview: '',
+      status: 'waiting' as const,
       createdAt: Date.now(),
       lastUpdate: Date.now(),
     }
 
-    await set(ref(database, `sessions/${code}`), sessionData)
+    try {
+      await set(ref(database, `sessions/${code}`), sessionData)
+      console.log('Session created:', code)
 
-    setSession({
-      screen: 'waiting',
-      role: 'host',
-      sessionCode: code,
-      localPhotos: [],
-    })
+      setSession({
+        screen: 'waiting',
+        role: 'host',
+        sessionCode: code,
+        localPhotos: [],
+      })
+    } catch (error) {
+      console.error('Failed to create session:', error)
+      alert('Failed to create session. Check console for details.')
+    }
   }
 
   const handleJoinSession = async () => {
     const code = joinCode.trim().toUpperCase()
     if (!code) return
 
-    // Check if session exists in Firebase
-    const sessionRef = ref(database, `sessions/${code}`)
-    const snapshot = await get(sessionRef)
+    try {
+      // Check if session exists in Firebase
+      const sessionRef = ref(database, `sessions/${code}`)
+      console.log('Looking for session:', code)
+      const snapshot = await get(sessionRef)
 
-    if (snapshot.exists()) {
-      const session = snapshot.val()
-      session.guestJoined = true
-      session.lastUpdate = Date.now()
-      await set(sessionRef, session)
+      console.log('Snapshot exists:', snapshot.exists())
+      console.log('Snapshot data:', snapshot.val())
 
-      setSession({
-        screen: 'waiting',
-        role: 'guest',
-        sessionCode: code,
-        localPhotos: [],
-      })
-    } else {
-      alert('session not found')
+      if (snapshot.exists()) {
+        const session = snapshot.val()
+        session.guestJoined = true
+        session.lastUpdate = Date.now()
+        await set(sessionRef, session)
+
+        setSession({
+          screen: 'waiting',
+          role: 'guest',
+          sessionCode: code,
+          localPhotos: [],
+        })
+      } else {
+        console.error('Session not found:', code)
+        alert('session not found')
+      }
+    } catch (error) {
+      console.error('Error joining session:', error)
+      alert('Error joining session. Check console.')
     }
   }
 

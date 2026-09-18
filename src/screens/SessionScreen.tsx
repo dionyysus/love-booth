@@ -23,7 +23,7 @@ export function SessionScreen({ session, setSession }: Props) {
   const [partnerPreview, setPartnerPreview] = useState<string | null>(null)
   const isCapturingRef = useRef(false)
   const capturedPhotosRef = useRef<string[]>([])
-  const previewIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const previewIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const isSoloMode = session.sessionCode === 'solo'
 
