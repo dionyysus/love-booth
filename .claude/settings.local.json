@@ -8,7 +8,9 @@
       "Bash(npm run dev:*)",
       "WebFetch(domain:getangie.com)",
       "WebFetch(domain:teaastudio.pages.dev)",
-      "Bash(lsof:*)"
+      "Bash(lsof:*)",
+      "Bash(git credential-osxkeychain:*)",
+      "Bash(printf:*)"
     ]
   }
 }

@@ -1,5 +1,7 @@
 import type { AppSession } from '../types'
 import { useState } from 'react'
+import { ref, set, get } from 'firebase/database'
+import { database } from '../lib/firebase'
 
 type Props = {
   setSession: React.Dispatch<React.SetStateAction<AppSession>>
@@ -8,10 +10,10 @@ type Props = {
 export function LandingScreen({ setSession }: Props) {
   const [joinCode, setJoinCode] = useState('')
 
-  const handleCreateSession = () => {
+  const handleCreateSession = async () => {
     const code = Math.random().toString(36).substring(2, 8).toUpperCase()
 
-    // Initialize session in localStorage
+    // Initialize session in Firebase
     const sessionData = {
       code,
       hostJoined: true,
@@ -26,7 +28,8 @@ export function LandingScreen({ setSession }: Props) {
       createdAt: Date.now(),
       lastUpdate: Date.now(),
     }
-    localStorage.setItem(`session_${code}`, JSON.stringify(sessionData))
+
+    await set(ref(database, `sessions/${code}`), sessionData)
 
     setSession({
       screen: 'waiting',
@@ -36,17 +39,19 @@ export function LandingScreen({ setSession }: Props) {
     })
   }
 
-  const handleJoinSession = () => {
+  const handleJoinSession = async () => {
     const code = joinCode.trim().toUpperCase()
     if (!code) return
 
-    // Check if session exists
-    const sessionData = localStorage.getItem(`session_${code}`)
-    if (sessionData) {
-      const session = JSON.parse(sessionData)
+    // Check if session exists in Firebase
+    const sessionRef = ref(database, `sessions/${code}`)
+    const snapshot = await get(sessionRef)
+
+    if (snapshot.exists()) {
+      const session = snapshot.val()
       session.guestJoined = true
       session.lastUpdate = Date.now()
-      localStorage.setItem(`session_${code}`, JSON.stringify(session))
+      await set(sessionRef, session)
 
       setSession({
         screen: 'waiting',

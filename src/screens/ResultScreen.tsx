@@ -1,5 +1,7 @@
 import type { AppSession, SessionData } from '../types'
 import { useEffect, useState, useRef } from 'react'
+import { ref, get, remove } from 'firebase/database'
+import { database } from '../lib/firebase'
 
 type Props = {
   session: AppSession
@@ -18,10 +20,15 @@ export function ResultScreen({ session, setSession }: Props) {
   useEffect(() => {
     if (!session.sessionCode || isSoloMode) return
 
-    const data = localStorage.getItem(`session_${session.sessionCode}`)
-    if (data) {
-      setSessionData(JSON.parse(data))
+    const loadSession = async () => {
+      const sessionRef = ref(database, `sessions/${session.sessionCode}`)
+      const snapshot = await get(sessionRef)
+      if (snapshot.exists()) {
+        setSessionData(snapshot.val())
+      }
     }
+
+    loadSession()
   }, [session.sessionCode, isSoloMode])
 
   // Generate photo strip
@@ -159,10 +166,10 @@ export function ResultScreen({ session, setSession }: Props) {
     link.click()
   }
 
-  const handleNewSession = () => {
+  const handleNewSession = async () => {
     // Clean up old session
-    if (session.sessionCode) {
-      localStorage.removeItem(`session_${session.sessionCode}`)
+    if (session.sessionCode && session.sessionCode !== 'solo') {
+      await remove(ref(database, `sessions/${session.sessionCode}`))
     }
 
     setSession({

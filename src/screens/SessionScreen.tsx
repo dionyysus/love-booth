@@ -1,6 +1,8 @@
 import type { AppSession, SessionData } from '../types'
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { useCamera } from '../hooks/useCamera'
+import { ref, onValue, set, update } from 'firebase/database'
+import { database } from '../lib/firebase'
 
 type Props = {
   session: AppSession
@@ -29,14 +31,14 @@ export function SessionScreen({ session, setSession }: Props) {
     return () => stopCamera()
   }, [startCamera, stopCamera])
 
-  // Poll for session updates (skip in solo mode)
+  // Listen for session updates (skip in solo mode)
   useEffect(() => {
     if (!session.sessionCode || isSoloMode) return
 
-    const checkSession = () => {
-      const data = localStorage.getItem(`session_${session.sessionCode}`)
-      if (data) {
-        const parsed: SessionData = JSON.parse(data)
+    const sessionRef = ref(database, `sessions/${session.sessionCode}`)
+    const unsubscribe = onValue(sessionRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const parsed: SessionData = snapshot.val()
         setSessionData(parsed)
 
         // Check if both ready and start countdown
@@ -58,16 +60,13 @@ export function SessionScreen({ session, setSession }: Props) {
           }))
         }
       }
-    }
+    })
 
-    checkSession()
-    const interval = setInterval(checkSession, 100)
-
-    return () => clearInterval(interval)
+    return () => unsubscribe()
   }, [session.sessionCode, setSession, localPhotos, isSoloMode])
 
   // Handle ready button
-  const handleReady = () => {
+  const handleReady = async () => {
     setIsReady(true)
 
     // Solo mode: start immediately
@@ -88,7 +87,7 @@ export function SessionScreen({ session, setSession }: Props) {
     if (session.role === 'host' && updated.hostReady && updated.guestReady) {
       startCaptureSequence(updated)
     } else {
-      localStorage.setItem(`session_${session.sessionCode}`, JSON.stringify(updated))
+      await set(ref(database, `sessions/${session.sessionCode}`), updated)
     }
   }
 
@@ -146,6 +145,8 @@ export function SessionScreen({ session, setSession }: Props) {
     isCapturingRef.current = true
 
     try {
+      const sessionRef = ref(database, `sessions/${session.sessionCode}`)
+
       for (let shot = 0; shot < SHOTS_COUNT; shot++) {
         // Countdown
         for (let i = COUNTDOWN_SECONDS; i > 0; i--) {
@@ -156,7 +157,7 @@ export function SessionScreen({ session, setSession }: Props) {
             status: 'capturing' as const,
             lastUpdate: Date.now(),
           }
-          localStorage.setItem(`session_${session.sessionCode}`, JSON.stringify(updated))
+          await set(sessionRef, updated)
           await new Promise((r) => setTimeout(r, 1000))
         }
 
@@ -168,7 +169,7 @@ export function SessionScreen({ session, setSession }: Props) {
           status: 'capturing' as const,
           lastUpdate: Date.now(),
         }
-        localStorage.setItem(`session_${session.sessionCode}`, JSON.stringify(updated))
+        await set(sessionRef, updated)
 
         // Wait for both to capture
         await new Promise((r) => setTimeout(r, 500))
@@ -186,7 +187,7 @@ export function SessionScreen({ session, setSession }: Props) {
         status: 'complete' as const,
         lastUpdate: Date.now(),
       }
-      localStorage.setItem(`session_${session.sessionCode}`, JSON.stringify(completed))
+      await set(sessionRef, completed)
 
     } catch (err) {
       console.error('Capture error:', err)
@@ -205,12 +206,11 @@ export function SessionScreen({ session, setSession }: Props) {
         // Store photo in session
         if (session.sessionCode && sessionData) {
           const photoKey = session.role === 'host' ? 'hostPhotos' : 'guestPhotos'
-          const updated = {
-            ...sessionData,
+          const sessionRef = ref(database, `sessions/${session.sessionCode}`)
+          update(sessionRef, {
             [photoKey]: [...(sessionData[photoKey] || []), photo],
             lastUpdate: Date.now(),
-          }
-          localStorage.setItem(`session_${session.sessionCode}`, JSON.stringify(updated))
+          })
         }
       }
     }

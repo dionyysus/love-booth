@@ -1,5 +1,7 @@
 import type { AppSession, SessionData } from '../types'
 import { useEffect, useState } from 'react'
+import { ref, onValue, remove } from 'firebase/database'
+import { database } from '../lib/firebase'
 
 type Props = {
   session: AppSession
@@ -9,14 +11,14 @@ type Props = {
 export function WaitingRoomScreen({ session, setSession }: Props) {
   const [sessionData, setSessionData] = useState<SessionData | null>(null)
 
-  // Poll for session updates
+  // Listen for session updates
   useEffect(() => {
     if (!session.sessionCode) return
 
-    const checkSession = () => {
-      const data = localStorage.getItem(`session_${session.sessionCode}`)
-      if (data) {
-        const parsed: SessionData = JSON.parse(data)
+    const sessionRef = ref(database, `sessions/${session.sessionCode}`)
+    const unsubscribe = onValue(sessionRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const parsed: SessionData = snapshot.val()
         setSessionData(parsed)
 
         // If both joined, move to session screen
@@ -26,18 +28,15 @@ export function WaitingRoomScreen({ session, setSession }: Props) {
           }, 1000)
         }
       }
-    }
+    })
 
-    checkSession()
-    const interval = setInterval(checkSession, 500)
-
-    return () => clearInterval(interval)
+    return () => unsubscribe()
   }, [session.sessionCode, setSession])
 
-  const handleBack = () => {
+  const handleBack = async () => {
     // Clean up session if host leaves
     if (session.role === 'host' && session.sessionCode) {
-      localStorage.removeItem(`session_${session.sessionCode}`)
+      await remove(ref(database, `sessions/${session.sessionCode}`))
     }
     setSession({
       screen: 'landing',
