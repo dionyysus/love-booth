@@ -1,6 +1,6 @@
-import type { AppSession, SessionData } from '../types'
+import type { AppSession } from '../types'
 import { useEffect, useState, useRef } from 'react'
-import { ref, get, remove } from 'firebase/database'
+import { ref, remove } from 'firebase/database'
 import { database } from '../lib/firebase'
 
 type Props = {
@@ -9,95 +9,27 @@ type Props = {
 }
 
 export function ResultScreen({ session, setSession }: Props) {
-  const [sessionData, setSessionData] = useState<SessionData | null>(null)
   const [stripDataUrl, setStripDataUrl] = useState<string | null>(null)
   const [showPhoto, setShowPhoto] = useState(false)
   const canvasRef = useRef<HTMLCanvasElement>(null)
-
-  const isSoloMode = session.sessionCode === 'solo'
-
-  // Load session data
-  useEffect(() => {
-    if (!session.sessionCode || isSoloMode) return
-
-    const loadSession = async () => {
-      const sessionRef = ref(database, `sessions/${session.sessionCode}`)
-      const snapshot = await get(sessionRef)
-      if (snapshot.exists()) {
-        setSessionData(snapshot.val())
-      }
-    }
-
-    loadSession()
-  }, [session.sessionCode, isSoloMode])
 
   // Generate photo strip
   useEffect(() => {
     if (!canvasRef.current) return
 
-    // Solo mode: use session.localPhotos
-    if (isSoloMode) {
-      const photos = session.localPhotos
-      if (photos.length === 0) return
-
-      const canvas = canvasRef.current
-      const ctx = canvas.getContext('2d')
-      if (!ctx) return
-
-      // Strip dimensions (single column)
-      const photoWidth = 200
-      const photoHeight = 250
-      const stripWidth = photoWidth
-      const stripHeight = photoHeight * photos.length
-      const padding = 20
-
-      canvas.width = stripWidth + padding * 2
-      canvas.height = stripHeight + padding * 2
-
-      // White background
-      ctx.fillStyle = '#FFFFFF'
-      ctx.fillRect(0, 0, canvas.width, canvas.height)
-
-      // Load and draw photos
-      const loadPhotos = async () => {
-        for (let i = 0; i < photos.length; i++) {
-          const img = await loadImage(photos[i])
-          ctx.drawImage(
-            img,
-            padding,
-            padding + i * photoHeight,
-            photoWidth,
-            photoHeight
-          )
-        }
-
-        // Convert to data URL
-        setStripDataUrl(canvas.toDataURL('image/png'))
-      }
-
-      loadPhotos()
-      return
-    }
-
-    // Paired mode: use sessionData
-    if (!sessionData) return
-
-    const hostPhotos = sessionData.hostPhotos
-    const guestPhotos = sessionData.guestPhotos
-
-    if (hostPhotos.length === 0 || guestPhotos.length === 0) return
+    // Use local photos (works for both solo and paired mode)
+    const photos = session.localPhotos
+    if (photos.length === 0) return
 
     const canvas = canvasRef.current
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
-    const photosToUse = Math.min(hostPhotos.length, guestPhotos.length)
-
-    // Strip dimensions (side-by-side layout)
+    // Strip dimensions (single column)
     const photoWidth = 200
     const photoHeight = 250
-    const stripWidth = photoWidth * 2 // Two photos side-by-side
-    const stripHeight = photoHeight * photosToUse
+    const stripWidth = photoWidth
+    const stripHeight = photoHeight * photos.length
     const padding = 20
 
     canvas.width = stripWidth + padding * 2
@@ -109,22 +41,11 @@ export function ResultScreen({ session, setSession }: Props) {
 
     // Load and draw photos
     const loadPhotos = async () => {
-      for (let i = 0; i < photosToUse; i++) {
-        // Load host photo
-        const hostImg = await loadImage(hostPhotos[i])
+      for (let i = 0; i < photos.length; i++) {
+        const img = await loadImage(photos[i])
         ctx.drawImage(
-          hostImg,
+          img,
           padding,
-          padding + i * photoHeight,
-          photoWidth,
-          photoHeight
-        )
-
-        // Load guest photo
-        const guestImg = await loadImage(guestPhotos[i])
-        ctx.drawImage(
-          guestImg,
-          padding + photoWidth,
           padding + i * photoHeight,
           photoWidth,
           photoHeight
@@ -136,7 +57,7 @@ export function ResultScreen({ session, setSession }: Props) {
     }
 
     loadPhotos()
-  }, [sessionData, isSoloMode, session.localPhotos])
+  }, [session.localPhotos])
 
   // Animate photo delivery after strip is generated
   useEffect(() => {
