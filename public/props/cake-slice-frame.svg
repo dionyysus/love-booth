@@ -1,0 +1,163 @@
+<svg width="450" height="500" viewBox="0 0 450 500" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Cake texture -->
+    <filter id="cake-crumb">
+      <feTurbulence type="fractalNoise" baseFrequency="2" numOctaves="4"/>
+      <feColorMatrix type="saturate" values="0.3"/>
+    </filter>
+
+    <!-- Frosting drip gradient -->
+    <linearGradient id="frosting-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFF" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#FFB6C1" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Plate -->
+  <ellipse cx="225" cy="470" rx="180" ry="20"
+           fill="#E8F5E9"
+           stroke="#C8E6C9"
+           stroke-width="3"/>
+
+  <!-- Plate rim highlight -->
+  <ellipse cx="225" cy="465" rx="180" ry="8"
+           fill="#FFF"
+           opacity="0.5"/>
+
+  <!-- Plate shadow -->
+  <ellipse cx="225" cy="485" rx="160" ry="12"
+           fill="#000"
+           opacity="0.1"/>
+
+  <!-- Cake slice main body (side view triangle) -->
+  <!-- Bottom layer - vanilla -->
+  <path d="M 225 450 L 100 350 L 350 350 Z"
+        fill="#FFF9ED"
+        stroke="#D4A574"
+        stroke-width="3"
+        filter="url(#cake-crumb)"
+        opacity="0.95"/>
+
+  <!-- Frosting layer between -->
+  <path d="M 115 355 L 335 355 L 330 365 L 120 365 Z"
+        fill="#FFB6C1"
+        stroke="#FF9BAB"
+        stroke-width="2"/>
+
+  <!-- Middle layer - chocolate -->
+  <path d="M 120 365 L 330 365 L 315 280 L 135 280 Z"
+        fill="#8B6F47"
+        stroke="#6D5C47"
+        stroke-width="3"
+        filter="url(#cake-crumb)"
+        opacity="0.95"/>
+
+  <!-- Frosting layer between -->
+  <path d="M 135 285 L 315 285 L 310 295 L 140 295 Z"
+        fill="#FFE5CC"
+        stroke="#FFD4A3"
+        stroke-width="2"/>
+
+  <!-- Top layer - strawberry -->
+  <path d="M 140 295 L 310 295 L 290 210 L 160 210 Z"
+        fill="#FFB6C1"
+        stroke="#FF9BAB"
+        stroke-width="3"
+        filter="url(#cake-crumb)"
+        opacity="0.95"/>
+
+  <!-- Top frosting (generous swirl) -->
+  <path d="M 150 210 L 300 210 Q 310 200, 305 185 Q 300 170, 285 165 L 165 165 Q 150 170, 145 185 Q 140 200, 150 210 Z"
+        fill="#FFF"
+        stroke="#FFE5CC"
+        stroke-width="3"
+        opacity="0.95"/>
+
+  <!-- Frosting swirls/texture on top -->
+  <circle cx="180" cy="185" r="10" fill="#FFE5CC" opacity="0.6"/>
+  <circle cx="225" cy="180" r="12" fill="#FFE5CC" opacity="0.5"/>
+  <circle cx="270" cy="185" r="10" fill="#FFE5CC" opacity="0.6"/>
+
+  <!-- Frosting drips down the side -->
+  <path d="M 165 210 Q 160 230, 165 245"
+        fill="#FFF"
+        opacity="0.8"
+        stroke="#FFE5CC"
+        stroke-width="2"/>
+
+  <path d="M 200 210 Q 195 240, 200 260"
+        fill="#FFF"
+        opacity="0.8"
+        stroke="#FFE5CC"
+        stroke-width="2"/>
+
+  <path d="M 250 210 Q 245 235, 250 255"
+        fill="#FFF"
+        opacity="0.8"
+        stroke="#FFE5CC"
+        stroke-width="2"/>
+
+  <path d="M 285 210 Q 280 225, 285 240"
+        fill="#FFF"
+        opacity="0.8"
+        stroke="#FFE5CC"
+        stroke-width="2"/>
+
+  <!-- Candle -->
+  <rect x="217" y="130" width="16" height="35"
+        fill="#87CEEB"
+        stroke="#4682B4"
+        stroke-width="2"
+        rx="2"/>
+
+  <!-- Candle stripes -->
+  <line x1="217" y1="140" x2="233" y2="140" stroke="#FFF" stroke-width="2"/>
+  <line x1="217" y1="150" x2="233" y2="150" stroke="#FFF" stroke-width="2"/>
+  <line x1="217" y1="160" x2="233" y2="160" stroke="#FFF" stroke-width="2"/>
+
+  <!-- Flame -->
+  <ellipse cx="225" cy="118" rx="8" ry="12"
+           fill="#FFD700"/>
+
+  <!-- Flame inner glow -->
+  <ellipse cx="225" cy="118" rx="5" ry="8"
+           fill="#FFE066"/>
+
+  <!-- Flame highlight -->
+  <ellipse cx="224" cy="115" rx="3" ry="5"
+           fill="#FFF"
+           opacity="0.6"/>
+
+  <!-- Wax drip -->
+  <path d="M 225 130 Q 223 135, 225 140"
+        fill="#87CEEB"
+        opacity="0.7"
+        stroke="none"/>
+
+  <!-- Sprinkles on frosting -->
+  <rect x="170" y="175" width="8" height="3" fill="#FF1744" rx="1" transform="rotate(25 174 176.5)"/>
+  <rect x="190" y="185" width="8" height="3" fill="#4CAF50" rx="1" transform="rotate(-15 194 186.5)"/>
+  <rect x="225" y="190" width="8" height="3" fill="#2196F3" rx="1" transform="rotate(45 229 191.5)"/>
+  <rect x="255" y="180" width="8" height="3" fill="#FFD700" rx="1" transform="rotate(-30 259 181.5)"/>
+  <rect x="280" y="188" width="8" height="3" fill="#FF1744" rx="1" transform="rotate(60 284 189.5)"/>
+
+  <!-- Strawberry on top -->
+  <path d="M 275 168 Q 280 175, 275 182 Q 270 175, 275 168 Z"
+        fill="#DC143C"
+        stroke="#C41E3A"
+        stroke-width="1.5"/>
+
+  <!-- Strawberry seeds -->
+  <circle cx="274" cy="172" r="1" fill="#FFE066"/>
+  <circle cx="277" cy="175" r="1" fill="#FFE066"/>
+  <circle cx="275" cy="178" r="1" fill="#FFE066"/>
+
+  <!-- Cherry -->
+  <circle cx="185" cy="170" r="6" fill="#DC143C" stroke="#C41E3A" stroke-width="1.5"/>
+  <circle cx="183" cy="168" r="2" fill="#FF6B6B" opacity="0.6"/>
+
+  <!-- Cake crumbs on plate -->
+  <circle cx="120" cy="465" r="3" fill="#8B6F47" opacity="0.6"/>
+  <circle cx="330" cy="468" r="2" fill="#8B6F47" opacity="0.5"/>
+  <circle cx="280" cy="463" r="2.5" fill="#FFB6C1" opacity="0.6"/>
+</svg>

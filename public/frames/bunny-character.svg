@@ -1,0 +1,77 @@
+<svg width="400" height="533" viewBox="0 0 400 533" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <pattern id="check" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
+      <rect width="20" height="20" fill="#FFF9ED"/>
+      <rect x="20" y="0" width="20" height="20" fill="#FFE5CC"/>
+      <rect x="0" y="20" width="20" height="20" fill="#FFE5CC"/>
+      <rect x="20" y="20" width="20" height="20" fill="#FFF9ED"/>
+    </pattern>
+
+    <!-- Mask for transparent face cutout -->
+    <mask id="face-cutout">
+      <rect width="400" height="533" fill="white"/>
+      <circle cx="200" cy="240" r="100" fill="black"/>
+    </mask>
+  </defs>
+
+  <!-- Everything uses the mask to create the hole -->
+  <g mask="url(#face-cutout)">
+    <rect width="400" height="533" fill="url(#check)"/>
+
+    <!-- Bunny body -->
+    <ellipse cx="200" cy="400" rx="110" ry="120" fill="#FFF" stroke="#FFB6C1" stroke-width="4"/>
+
+    <!-- Bunny arms -->
+    <ellipse cx="100" cy="380" rx="35" ry="50" fill="#FFF" stroke="#FFB6C1" stroke-width="3" transform="rotate(-20 100 380)"/>
+    <ellipse cx="300" cy="380" rx="35" ry="50" fill="#FFF" stroke="#FFB6C1" stroke-width="3" transform="rotate(20 300 380)"/>
+
+    <!-- Bunny feet at bottom -->
+    <ellipse cx="160" cy="510" rx="45" ry="25" fill="#FFF" stroke="#FFB6C1" stroke-width="3"/>
+    <ellipse cx="240" cy="510" rx="45" ry="25" fill="#FFF" stroke="#FFB6C1" stroke-width="3"/>
+
+    <!-- Feet paw pads -->
+    <ellipse cx="160" cy="510" rx="12" ry="8" fill="#FFB6C1" opacity="0.6"/>
+    <ellipse cx="240" cy="510" rx="12" ry="8" fill="#FFB6C1" opacity="0.6"/>
+
+    <!-- Left ear -->
+    <ellipse cx="140" cy="80" rx="35" ry="80" fill="#FFF" stroke="#FFB6C1" stroke-width="4" transform="rotate(-15 140 80)"/>
+    <ellipse cx="140" cy="85" rx="20" ry="55" fill="#FFB6C1" opacity="0.4" transform="rotate(-15 140 85)"/>
+
+    <!-- Right ear -->
+    <ellipse cx="260" cy="80" rx="35" ry="80" fill="#FFF" stroke="#FFB6C1" stroke-width="4" transform="rotate(15 260 80)"/>
+    <ellipse cx="260" cy="85" rx="20" ry="55" fill="#FFB6C1" opacity="0.4" transform="rotate(15 260 85)"/>
+
+    <!-- Cheeks (blush marks) -->
+    <ellipse cx="90" cy="260" rx="25" ry="18" fill="#FFB6C1" opacity="0.5"/>
+    <ellipse cx="310" cy="260" rx="25" ry="18" fill="#FFB6C1" opacity="0.5"/>
+
+    <!-- Whiskers -->
+    <line x1="70" y1="250" x2="20" y2="240" stroke="#6D5C47" stroke-width="2.5"/>
+    <line x1="70" y1="260" x2="20" y2="260" stroke="#6D5C47" stroke-width="2.5"/>
+    <line x1="70" y1="270" x2="20" y2="280" stroke="#6D5C47" stroke-width="2.5"/>
+
+    <line x1="330" y1="250" x2="380" y2="240" stroke="#6D5C47" stroke-width="2.5"/>
+    <line x1="330" y1="260" x2="380" y2="260" stroke="#6D5C47" stroke-width="2.5"/>
+    <line x1="330" y1="270" x2="380" y2="280" stroke="#6D5C47" stroke-width="2.5"/>
+
+    <!-- Belly patch -->
+    <ellipse cx="200" cy="420" rx="60" ry="70" fill="#FFF9ED" stroke="#FFE5CC" stroke-width="2" opacity="0.8"/>
+
+    <!-- Bow on head -->
+    <ellipse cx="170" cy="160" rx="20" ry="15" fill="#FFB6C1" stroke="#FF9BAB" stroke-width="2" transform="rotate(-25 170 160)"/>
+    <ellipse cx="210" cy="155" rx="20" ry="15" fill="#FFB6C1" stroke="#FF9BAB" stroke-width="2" transform="rotate(25 210 155)"/>
+    <circle cx="190" cy="157" r="10" fill="#FF9BAB" stroke="#FFB6C1" stroke-width="2"/>
+    <circle cx="188" cy="155" r="4" fill="#FFF" opacity="0.6"/>
+
+    <!-- Decorative hearts floating around -->
+    <path d="M 350 100 Q 355 95, 360 100 Q 365 105, 360 110 Q 355 115, 350 110 Q 345 105, 350 100 Z"
+          fill="#FFB6C1" opacity="0.7"/>
+    <path d="M 40 150 Q 45 145, 50 150 Q 55 155, 50 160 Q 45 165, 40 160 Q 35 155, 40 150 Z"
+          fill="#FFD700" opacity="0.7"/>
+    <path d="M 360 450 Q 365 445, 370 450 Q 375 455, 370 460 Q 365 465, 360 460 Q 355 455, 360 450 Z"
+          fill="#87CEEB" opacity="0.7"/>
+  </g>
+
+  <!-- Cutout border on top -->
+  <circle cx="200" cy="240" r="100" fill="none" stroke="#FFB6C1" stroke-width="5"/>
+</svg>

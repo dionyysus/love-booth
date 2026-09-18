@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 60" fill="none">
+  <!-- Left star lens -->
+  <polygon points="35,5 40,20 55,20 43,30 48,45 35,36 22,45 27,30 15,20 30,20" fill="#F7D8E8" stroke="#3D352A" stroke-width="2"/>
+  <!-- Right star lens -->
+  <polygon points="125,5 130,20 145,20 133,30 138,45 125,36 112,45 117,30 105,20 120,20" fill="#F7D8E8" stroke="#3D352A" stroke-width="2"/>
+  <!-- Bridge -->
+  <path d="M55,25 Q80,15 105,25" fill="none" stroke="#3D352A" stroke-width="3"/>
+  <!-- Left arm -->
+  <line x1="15" y1="22" x2="0" y2="18" stroke="#3D352A" stroke-width="3" stroke-linecap="round"/>
+  <!-- Right arm -->
+  <line x1="145" y1="22" x2="160" y2="18" stroke="#3D352A" stroke-width="3" stroke-linecap="round"/>
+</svg>

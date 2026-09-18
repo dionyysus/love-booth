@@ -1,0 +1,104 @@
+<svg width="400" height="533" viewBox="0 0 400 533" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Mask that creates the transparent hole for the face -->
+    <mask id="face-cutout">
+      <!-- White shows the frame, black creates the hole -->
+      <rect width="400" height="533" fill="white"/>
+      <!-- This circle creates the transparent hole -->
+      <circle cx="200" cy="240" r="105" fill="black"/>
+    </mask>
+  </defs>
+
+  <!-- Everything below uses the mask, so the circle area will be transparent -->
+  <g mask="url(#face-cutout)">
+    <!-- Soft blue background with clouds -->
+    <rect width="400" height="533" fill="#E3F2FD"/>
+
+    <!-- Cloud decorations -->
+    <g opacity="0.6">
+      <ellipse cx="80" cy="80" rx="40" ry="25" fill="#FFF"/>
+      <ellipse cx="110" cy="75" rx="35" ry="22" fill="#FFF"/>
+      <ellipse cx="60" cy="75" rx="30" ry="20" fill="#FFF"/>
+    </g>
+
+    <g opacity="0.6">
+      <ellipse cx="320" cy="120" rx="45" ry="28" fill="#FFF"/>
+      <ellipse cx="350" cy="115" rx="38" ry="24" fill="#FFF"/>
+      <ellipse cx="295" cy="115" rx="32" ry="21" fill="#FFF"/>
+    </g>
+
+    <g opacity="0.6">
+      <ellipse cx="350" cy="450" rx="35" ry="22" fill="#FFF"/>
+      <ellipse cx="375" cy="445" rx="30" ry="19" fill="#FFF"/>
+    </g>
+
+    <!-- Bear body -->
+    <ellipse cx="200" cy="410" rx="115" ry="125" fill="#87CEEB" stroke="#4682B4" stroke-width="4"/>
+
+    <!-- Bear arms -->
+    <ellipse cx="95" cy="390" rx="38" ry="55" fill="#87CEEB" stroke="#4682B4" stroke-width="3" transform="rotate(-25 95 390)"/>
+    <ellipse cx="305" cy="390" rx="38" ry="55" fill="#87CEEB" stroke="#4682B4" stroke-width="3" transform="rotate(25 305 390)"/>
+
+    <!-- Paw pads on arms -->
+    <ellipse cx="90" cy="425" rx="18" ry="25" fill="#4682B4" opacity="0.3" transform="rotate(-25 90 425)"/>
+    <ellipse cx="310" cy="425" rx="18" ry="25" fill="#4682B4" opacity="0.3" transform="rotate(25 310 425)"/>
+
+    <!-- Bear feet -->
+    <ellipse cx="155" cy="520" rx="48" ry="28" fill="#87CEEB" stroke="#4682B4" stroke-width="3"/>
+    <ellipse cx="245" cy="520" rx="48" ry="28" fill="#87CEEB" stroke="#4682B4" stroke-width="3"/>
+
+    <!-- Feet pads -->
+    <ellipse cx="155" cy="520" rx="14" ry="10" fill="#4682B4" opacity="0.3"/>
+    <circle cx="145" cy="515" r="4" fill="#4682B4" opacity="0.3"/>
+    <circle cx="165" cy="515" r="4" fill="#4682B4" opacity="0.3"/>
+
+    <ellipse cx="245" cy="520" rx="14" ry="10" fill="#4682B4" opacity="0.3"/>
+    <circle cx="235" cy="515" r="4" fill="#4682B4" opacity="0.3"/>
+    <circle cx="255" cy="515" r="4" fill="#4682B4" opacity="0.3"/>
+
+    <!-- Left ear -->
+    <circle cx="125" cy="110" r="45" fill="#87CEEB" stroke="#4682B4" stroke-width="4"/>
+    <circle cx="125" cy="115" r="25" fill="#FFF" opacity="0.6"/>
+
+    <!-- Right ear -->
+    <circle cx="275" cy="110" r="45" fill="#87CEEB" stroke="#4682B4" stroke-width="4"/>
+    <circle cx="275" cy="115" r="25" fill="#FFF" opacity="0.6"/>
+
+    <!-- Muzzle/snout area below cutout -->
+    <ellipse cx="200" cy="370" rx="55" ry="45" fill="#FFF" stroke="#4682B4" stroke-width="3"/>
+
+    <!-- Nose -->
+    <ellipse cx="200" cy="365" rx="18" ry="14" fill="#4A3826"/>
+    <ellipse cx="195" cy="362" rx="6" ry="5" fill="#FFF" opacity="0.7"/>
+
+    <!-- Mouth -->
+    <path d="M 200 375 Q 190 382, 182 377" stroke="#4A3826" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <path d="M 200 375 Q 210 382, 218 377" stroke="#4A3826" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+
+    <!-- Cheeks/blush -->
+    <ellipse cx="85" cy="270" rx="28" ry="20" fill="#FFB6C1" opacity="0.4"/>
+    <ellipse cx="315" cy="270" rx="28" ry="20" fill="#FFB6C1" opacity="0.4"/>
+
+    <!-- Belly patch -->
+    <ellipse cx="200" cy="440" rx="65" ry="75" fill="#FFF" opacity="0.7"/>
+
+    <!-- Party hat on head -->
+    <path d="M 180 60 L 200 10 L 220 60 Z" fill="#FFB6C1" stroke="#FF9BAB" stroke-width="3"/>
+    <circle cx="200" cy="10" r="8" fill="#FFD700" stroke="#FFB300" stroke-width="2"/>
+    <ellipse cx="200" cy="63" rx="23" ry="8" fill="#FFF" stroke="#FFE5CC" stroke-width="2"/>
+
+    <!-- Polka dots on hat -->
+    <circle cx="192" cy="35" r="4" fill="#FFF" opacity="0.7"/>
+    <circle cx="207" cy="42" r="4" fill="#FFF" opacity="0.7"/>
+    <circle cx="197" cy="50" r="4" fill="#FFF" opacity="0.7"/>
+
+    <!-- Stars floating around -->
+    <path d="M 350 200 L 355 210 L 365 212 L 357 220 L 358 230 L 350 225 L 342 230 L 343 220 L 335 212 L 345 210 Z"
+          fill="#FFD700" opacity="0.8"/>
+    <path d="M 50 350 L 54 358 L 62 360 L 56 366 L 57 374 L 50 370 L 43 374 L 44 366 L 38 360 L 46 358 Z"
+          fill="#FFD700" opacity="0.8"/>
+  </g>
+
+  <!-- Cutout border (drawn on top, not masked) -->
+  <circle cx="200" cy="240" r="105" fill="none" stroke="#4682B4" stroke-width="5"/>
+</svg>

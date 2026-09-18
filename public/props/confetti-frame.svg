@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 250" fill="none">
+  <!-- Confetti pieces scattered around edges -->
+  <!-- Top area -->
+  <rect x="20" y="10" width="12" height="6" rx="1" fill="#F7D8E8" transform="rotate(25 26 13)"/>
+  <rect x="50" y="5" width="10" height="5" rx="1" fill="#A3A86B" transform="rotate(-15 55 7)"/>
+  <rect x="90" y="8" width="14" height="6" rx="1" fill="#D6E5ED" transform="rotate(10 97 11)"/>
+  <rect x="130" y="12" width="11" height="5" rx="1" fill="#F7D8E8" transform="rotate(-30 135 14)"/>
+  <rect x="165" y="6" width="13" height="6" rx="1" fill="#A3A86B" transform="rotate(20 171 9)"/>
+
+  <!-- Left side -->
+  <rect x="5" y="50" width="10" height="5" rx="1" fill="#A3A86B" transform="rotate(45 10 52)"/>
+  <rect x="10" y="100" width="12" height="6" rx="1" fill="#D6E5ED" transform="rotate(-20 16 103)"/>
+  <rect x="3" y="150" width="11" height="5" rx="1" fill="#F7D8E8" transform="rotate(35 8 152)"/>
+  <rect x="8" y="200" width="13" height="6" rx="1" fill="#A3A86B" transform="rotate(-10 14 203)"/>
+
+  <!-- Right side -->
+  <rect x="185" y="45" width="11" height="5" rx="1" fill="#F7D8E8" transform="rotate(-40 190 47)"/>
+  <rect x="182" y="95" width="13" height="6" rx="1" fill="#A3A86B" transform="rotate(25 188 98)"/>
+  <rect x="187" y="145" width="10" height="5" rx="1" fill="#D6E5ED" transform="rotate(-15 192 147)"/>
+  <rect x="180" y="195" width="14" height="6" rx="1" fill="#F7D8E8" transform="rotate(30 187 198)"/>
+
+  <!-- Bottom area -->
+  <rect x="25" y="238" width="12" height="6" rx="1" fill="#D6E5ED" transform="rotate(-25 31 241)"/>
+  <rect x="60" y="240" width="10" height="5" rx="1" fill="#A3A86B" transform="rotate(15 65 242)"/>
+  <rect x="100" y="235" width="14" height="6" rx="1" fill="#F7D8E8" transform="rotate(-5 107 238)"/>
+  <rect x="140" y="242" width="11" height="5" rx="1" fill="#A3A86B" transform="rotate(30 145 244)"/>
+  <rect x="170" y="237" width="12" height="6" rx="1" fill="#D6E5ED" transform="rotate(-20 176 240)"/>
+
+  <!-- Circle confetti -->
+  <circle cx="35" cy="30" r="5" fill="#A3A86B"/>
+  <circle cx="175" cy="25" r="4" fill="#F7D8E8"/>
+  <circle cx="15" cy="125" r="5" fill="#F7D8E8"/>
+  <circle cx="190" cy="120" r="4" fill="#A3A86B"/>
+  <circle cx="12" cy="220" r="4" fill="#D6E5ED"/>
+  <circle cx="188" cy="225" r="5" fill="#F7D8E8"/>
+  <circle cx="85" cy="245" r="4" fill="#A3A86B"/>
+  <circle cx="115" cy="5" r="4" fill="#D6E5ED"/>
+</svg>

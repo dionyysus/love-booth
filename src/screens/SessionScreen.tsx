@@ -1,0 +1,283 @@
+import type { AppSession, SessionData } from '../types'
+import { useEffect, useState, useCallback, useRef } from 'react'
+import { useCamera } from '../hooks/useCamera'
+
+type Props = {
+  session: AppSession
+  setSession: React.Dispatch<React.SetStateAction<AppSession>>
+}
+
+const COUNTDOWN_SECONDS = 3
+const SHOTS_COUNT = 4
+const PAUSE_BETWEEN_SHOTS = 2000
+
+export function SessionScreen({ session, setSession }: Props) {
+  const { videoRef, status, startCamera, stopCamera, captureFrame } = useCamera()
+  const [sessionData, setSessionData] = useState<SessionData | null>(null)
+  const [isReady, setIsReady] = useState(false)
+  const [countdown, setCountdown] = useState<number | null>(null)
+  const [currentShot, setCurrentShot] = useState(0)
+  const [localPhotos, setLocalPhotos] = useState<string[]>([])
+  const isCapturingRef = useRef(false)
+  const capturedPhotosRef = useRef<string[]>([])
+
+  const isSoloMode = session.sessionCode === 'solo'
+
+  // Start camera
+  useEffect(() => {
+    startCamera()
+    return () => stopCamera()
+  }, [startCamera, stopCamera])
+
+  // Poll for session updates (skip in solo mode)
+  useEffect(() => {
+    if (!session.sessionCode || isSoloMode) return
+
+    const checkSession = () => {
+      const data = localStorage.getItem(`session_${session.sessionCode}`)
+      if (data) {
+        const parsed: SessionData = JSON.parse(data)
+        setSessionData(parsed)
+
+        // Check if both ready and start countdown
+        if (parsed.hostReady && parsed.guestReady && parsed.countdown !== null) {
+          setCountdown(parsed.countdown)
+        }
+
+        // Check if capturing
+        if (parsed.status === 'capturing') {
+          setCurrentShot(parsed.currentShot)
+        }
+
+        // Check if complete
+        if (parsed.status === 'complete') {
+          setSession((s) => ({
+            ...s,
+            screen: 'result',
+            localPhotos: localPhotos,
+          }))
+        }
+      }
+    }
+
+    checkSession()
+    const interval = setInterval(checkSession, 100)
+
+    return () => clearInterval(interval)
+  }, [session.sessionCode, setSession, localPhotos, isSoloMode])
+
+  // Handle ready button
+  const handleReady = () => {
+    setIsReady(true)
+
+    // Solo mode: start immediately
+    if (isSoloMode) {
+      startSoloCaptureSequence()
+      return
+    }
+
+    if (!session.sessionCode || !sessionData) return
+
+    const updated = {
+      ...sessionData,
+      [session.role === 'host' ? 'hostReady' : 'guestReady']: true,
+      lastUpdate: Date.now(),
+    }
+
+    // If both ready and we're host, start countdown
+    if (session.role === 'host' && updated.hostReady && updated.guestReady) {
+      startCaptureSequence(updated)
+    } else {
+      localStorage.setItem(`session_${session.sessionCode}`, JSON.stringify(updated))
+    }
+  }
+
+  // Start solo capture sequence
+  const startSoloCaptureSequence = useCallback(async () => {
+    if (isCapturingRef.current) return
+    isCapturingRef.current = true
+    capturedPhotosRef.current = []
+
+    try {
+      for (let shot = 0; shot < SHOTS_COUNT; shot++) {
+        setCurrentShot(shot)
+
+        // Countdown
+        for (let i = COUNTDOWN_SECONDS; i > 0; i--) {
+          setCountdown(i)
+          await new Promise((r) => setTimeout(r, 1000))
+        }
+
+        // Capture!
+        setCountdown(0)
+        await new Promise((r) => setTimeout(r, 100))
+
+        const photo = captureFrame()
+        if (photo) {
+          capturedPhotosRef.current.push(photo)
+          setLocalPhotos((prev) => [...prev, photo])
+        }
+
+        setCountdown(null)
+
+        if (shot < SHOTS_COUNT - 1) {
+          await new Promise((r) => setTimeout(r, PAUSE_BETWEEN_SHOTS))
+        }
+      }
+
+      // Go to result
+      await new Promise((r) => setTimeout(r, 500))
+      setSession((s) => ({
+        ...s,
+        screen: 'result',
+        localPhotos: capturedPhotosRef.current,
+      }))
+
+    } catch (err) {
+      console.error('Capture error:', err)
+    } finally {
+      isCapturingRef.current = false
+    }
+  }, [captureFrame, setSession])
+
+  // Start capture sequence (only host controls this)
+  const startCaptureSequence = useCallback(async (data: SessionData) => {
+    if (session.role !== 'host' || !session.sessionCode || isCapturingRef.current) return
+    isCapturingRef.current = true
+
+    try {
+      for (let shot = 0; shot < SHOTS_COUNT; shot++) {
+        // Countdown
+        for (let i = COUNTDOWN_SECONDS; i > 0; i--) {
+          const updated = {
+            ...data,
+            countdown: i,
+            currentShot: shot,
+            status: 'capturing' as const,
+            lastUpdate: Date.now(),
+          }
+          localStorage.setItem(`session_${session.sessionCode}`, JSON.stringify(updated))
+          await new Promise((r) => setTimeout(r, 1000))
+        }
+
+        // Capture!
+        const updated = {
+          ...data,
+          countdown: 0,
+          currentShot: shot,
+          status: 'capturing' as const,
+          lastUpdate: Date.now(),
+        }
+        localStorage.setItem(`session_${session.sessionCode}`, JSON.stringify(updated))
+
+        // Wait for both to capture
+        await new Promise((r) => setTimeout(r, 500))
+
+        if (shot < SHOTS_COUNT - 1) {
+          await new Promise((r) => setTimeout(r, PAUSE_BETWEEN_SHOTS))
+        }
+      }
+
+      // Mark complete
+      const completed = {
+        ...data,
+        countdown: null,
+        currentShot: SHOTS_COUNT,
+        status: 'complete' as const,
+        lastUpdate: Date.now(),
+      }
+      localStorage.setItem(`session_${session.sessionCode}`, JSON.stringify(completed))
+
+    } catch (err) {
+      console.error('Capture error:', err)
+    } finally {
+      isCapturingRef.current = false
+    }
+  }, [session.role, session.sessionCode])
+
+  // Capture photo when countdown hits 0
+  useEffect(() => {
+    if (countdown === 0 && status === 'active') {
+      const photo = captureFrame()
+      if (photo) {
+        setLocalPhotos((prev) => [...prev, photo])
+
+        // Store photo in session
+        if (session.sessionCode && sessionData) {
+          const photoKey = session.role === 'host' ? 'hostPhotos' : 'guestPhotos'
+          const updated = {
+            ...sessionData,
+            [photoKey]: [...(sessionData[photoKey] || []), photo],
+            lastUpdate: Date.now(),
+          }
+          localStorage.setItem(`session_${session.sessionCode}`, JSON.stringify(updated))
+        }
+      }
+    }
+  }, [countdown, status, captureFrame, session.sessionCode, session.role, sessionData])
+
+  const bothReady = sessionData?.hostReady && sessionData?.guestReady
+  const isCapturing = countdown !== null
+
+  return (
+    <div className="flex flex-1 flex-col items-center justify-center min-h-screen px-4 py-8 bg-black">
+      {/* Countdown overlay */}
+      {isCapturing && countdown !== null && countdown > 0 && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-50">
+          <div className="text-white text-9xl font-light animate-pulse">
+            {countdown}
+          </div>
+        </div>
+      )}
+
+      {/* Shot counter */}
+      {isCapturing && (
+        <div className="absolute top-8 left-1/2 -translate-x-1/2 text-white text-sm font-light tracking-widest z-40">
+          {currentShot + 1} / {SHOTS_COUNT}
+        </div>
+      )}
+
+      {/* Camera preview */}
+      <div className="relative w-full max-w-4xl aspect-[16/9] bg-gray-900 rounded-lg overflow-hidden mb-8">
+        <video
+          ref={videoRef}
+          autoPlay
+          playsInline
+          muted
+          className="absolute inset-0 w-full h-full object-cover scale-x-[-1]"
+        />
+      </div>
+
+      {/* Ready button */}
+      {!bothReady && !isCapturing && (
+        <button
+          onClick={handleReady}
+          disabled={isReady || status !== 'active'}
+          className="px-12 py-4 bg-white text-black text-sm font-light tracking-widest hover:bg-gray-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+        >
+          {isSoloMode ? 'ready' : (isReady ? 'waiting for partner...' : 'ready')}
+        </button>
+      )}
+
+      {bothReady && !isCapturing && session.role === 'guest' && (
+        <p className="text-white text-sm font-light tracking-wide">
+          get ready...
+        </p>
+      )}
+
+      {/* Progress dots */}
+      {isCapturing && (
+        <div className="flex gap-2 mt-4">
+          {Array.from({ length: SHOTS_COUNT }).map((_, i) => (
+            <div
+              key={i}
+              className={`w-3 h-3 rounded-full transition-colors ${
+                i < localPhotos.length ? 'bg-white' : 'bg-white/30'
+              }`}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}

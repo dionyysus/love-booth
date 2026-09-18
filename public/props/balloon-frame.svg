@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 250" fill="none">
+  <!-- Top left balloon -->
+  <ellipse cx="30" cy="35" rx="25" ry="32" fill="#F7D8E8" stroke="#3D352A" stroke-width="2"/>
+  <polygon points="30,67 25,75 35,75" fill="#F7D8E8" stroke="#3D352A" stroke-width="1"/>
+  <path d="M30,75 Q25,90 35,110" fill="none" stroke="#3D352A" stroke-width="1.5"/>
+
+  <!-- Top right balloon -->
+  <ellipse cx="170" cy="40" rx="22" ry="28" fill="#A3A86B" stroke="#3D352A" stroke-width="2"/>
+  <polygon points="170,68 165,76 175,76" fill="#A3A86B" stroke="#3D352A" stroke-width="1"/>
+  <path d="M170,76 Q175,95 165,115" fill="none" stroke="#3D352A" stroke-width="1.5"/>
+
+  <!-- Bottom left balloon -->
+  <ellipse cx="25" cy="210" rx="20" ry="26" fill="#A3A86B" stroke="#3D352A" stroke-width="2"/>
+  <polygon points="25,236 20,244 30,244" fill="#A3A86B" stroke="#3D352A" stroke-width="1"/>
+
+  <!-- Bottom right balloon -->
+  <ellipse cx="175" cy="205" rx="23" ry="30" fill="#F7D8E8" stroke="#3D352A" stroke-width="2"/>
+  <polygon points="175,235 170,243 180,243" fill="#F7D8E8" stroke="#3D352A" stroke-width="1"/>
+
+  <!-- Small accent balloon top middle -->
+  <ellipse cx="100" cy="20" rx="15" ry="20" fill="#D6E5ED" stroke="#3D352A" stroke-width="2"/>
+  <polygon points="100,40 97,46 103,46" fill="#D6E5ED" stroke="#3D352A" stroke-width="1"/>
+</svg>

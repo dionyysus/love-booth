@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 60" fill="none">
+  <!-- Left bow -->
+  <ellipse cx="25" cy="30" rx="22" ry="18" fill="#A3A86B" stroke="#3D352A" stroke-width="2"/>
+  <!-- Right bow -->
+  <ellipse cx="95" cy="30" rx="22" ry="18" fill="#A3A86B" stroke="#3D352A" stroke-width="2"/>
+  <!-- Center knot -->
+  <ellipse cx="60" cy="30" rx="10" ry="12" fill="#F7D8E8" stroke="#3D352A" stroke-width="2"/>
+  <!-- Bow details -->
+  <path d="M10,20 Q25,30 10,40" fill="none" stroke="#3D352A" stroke-width="1.5"/>
+  <path d="M110,20 Q95,30 110,40" fill="none" stroke="#3D352A" stroke-width="1.5"/>
+</svg>

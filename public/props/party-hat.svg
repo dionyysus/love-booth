@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 120" fill="none">
+  <!-- Party hat -->
+  <polygon points="50,5 85,115 15,115" fill="#F7D8E8" stroke="#3D352A" stroke-width="2"/>
+  <!-- Stripes -->
+  <line x1="50" y1="5" x2="30" y2="115" stroke="#A3A86B" stroke-width="3"/>
+  <line x1="50" y1="5" x2="70" y2="115" stroke="#A3A86B" stroke-width="3"/>
+  <!-- Pom pom -->
+  <circle cx="50" cy="8" r="8" fill="#A3A86B"/>
+  <!-- Elastic band hint -->
+  <ellipse cx="50" cy="115" rx="35" ry="5" fill="none" stroke="#3D352A" stroke-width="1.5" stroke-dasharray="4 2"/>
+</svg>

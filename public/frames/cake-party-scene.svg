@@ -1,0 +1,101 @@
+<svg width="400" height="533" viewBox="0 0 400 533" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Mask with TWO heart-shaped cutouts -->
+    <mask id="face-cutouts">
+      <rect width="400" height="533" fill="white"/>
+      <!-- Left heart cutout -->
+      <path d="M 120 280 Q 110 270, 100 275 Q 90 280, 95 290 Q 100 300, 120 320 Q 140 300, 145 290 Q 150 280, 140 275 Q 130 270, 120 280 Z" fill="black"/>
+      <!-- Right heart cutout -->
+      <path d="M 280 280 Q 270 270, 260 275 Q 250 280, 255 290 Q 260 300, 280 320 Q 300 300, 305 290 Q 310 280, 300 275 Q 290 270, 280 280 Z" fill="black"/>
+    </mask>
+  </defs>
+
+  <!-- Everything uses the mask -->
+  <g mask="url(#face-cutouts)">
+    <!-- Pastel pink background -->
+    <rect width="400" height="533" fill="#FFB6C1"/>
+
+    <!-- Decorative border -->
+    <rect x="15" y="15" width="370" height="503" fill="none" stroke="#FFF" stroke-width="8" rx="20"/>
+    <rect x="25" y="25" width="350" height="483" fill="none" stroke="#FF9BAB" stroke-width="3" rx="15"/>
+
+    <!-- Top decorative elements -->
+    <!-- Heart in center top -->
+    <path d="M 200 80 Q 190 70, 180 75 Q 170 80, 175 90 Q 180 100, 200 115 Q 220 100, 225 90 Q 230 80, 220 75 Q 210 70, 200 80 Z"
+          fill="none" stroke="#C8E6C9" stroke-width="8"/>
+    <path d="M 200 82 Q 192 74, 184 78 Q 176 82, 180 90 Q 185 98, 200 110 Q 215 98, 220 90 Q 224 82, 216 78 Q 208 74, 200 82 Z"
+          fill="none" stroke="#81C784" stroke-width="4"/>
+
+    <!-- Flowers top left -->
+    <circle cx="80" cy="80" r="15" fill="#FFF" stroke="#FFE066" stroke-width="3"/>
+    <circle cx="80" cy="80" r="8" fill="#FFE066"/>
+    <circle cx="70" cy="75" r="8" fill="#FFF" stroke="#FFE066" stroke-width="2"/>
+    <circle cx="90" cy="75" r="8" fill="#FFF" stroke="#FFE066" stroke-width="2"/>
+    <circle cx="75" cy="90" r="8" fill="#FFF" stroke="#FFE066" stroke-width="2"/>
+    <circle cx="85" cy="90" r="8" fill="#FFF" stroke="#FFE066" stroke-width="2"/>
+
+    <!-- Flowers top right -->
+    <circle cx="320" cy="90" r="15" fill="#FFF" stroke="#FFE066" stroke-width="3"/>
+    <circle cx="320" cy="90" r="8" fill="#FFE066"/>
+    <circle cx="310" cy="85" r="8" fill="#FFF" stroke="#FFE066" stroke-width="2"/>
+    <circle cx="330" cy="85" r="8" fill="#FFF" stroke="#FFE066" stroke-width="2"/>
+    <circle cx="315" cy="100" r="8" fill="#FFF" stroke="#FFE066" stroke-width="2"/>
+    <circle cx="325" cy="100" r="8" fill="#FFF" stroke="#FFE066" stroke-width="2"/>
+
+    <!-- Left cherry -->
+    <circle cx="100" cy="140" r="18" fill="#DC143C" stroke="#C41E3A" stroke-width="3"/>
+    <circle cx="95" cy="135" r="6" fill="#FF6B6B" opacity="0.7"/>
+    <circle cx="120" cy="155" r="16" fill="#DC143C" stroke="#C41E3A" stroke-width="3"/>
+    <circle cx="116" cy="151" r="5" fill="#FF6B6B" opacity="0.7"/>
+    <path d="M 105 125 Q 110 110, 115 140" stroke="#8B4513" stroke-width="3" fill="none"/>
+
+    <!-- Right cherry -->
+    <circle cx="300" cy="155" r="18" fill="#DC143C" stroke="#C41E3A" stroke-width="3"/>
+    <circle cx="295" cy="150" r="6" fill="#FF6B6B" opacity="0.7"/>
+    <circle cx="320" cy="170" r="16" fill="#DC143C" stroke="#C41E3A" stroke-width="3"/>
+    <circle cx="316" cy="166" r="5" fill="#FF6B6B" opacity="0.7"/>
+    <path d="M 305 140 Q 310 125, 315 155" stroke="#8B4513" stroke-width="3" fill="none"/>
+
+    <!-- Birthday cake at bottom center -->
+    <rect x="150" y="400" width="100" height="60" fill="#FFE066" stroke="#FFD700" stroke-width="3" rx="5"/>
+
+    <!-- Cake frosting -->
+    <path d="M 148 400 Q 160 390, 175 395 Q 190 400, 200 395 Q 210 390, 225 395 Q 240 400, 252 400 L 252 410 L 148 410 Z"
+          fill="#FFF" stroke="#FFE5CC" stroke-width="2"/>
+
+    <!-- Cake layers -->
+    <line x1="150" y1="430" x2="250" y2="430" stroke="#FFD700" stroke-width="2"/>
+
+    <!-- Candles -->
+    <rect x="170" y="380" width="6" height="20" fill="#87CEEB" rx="1"/>
+    <rect x="197" y="375" width="6" height="25" fill="#FFB6C1" rx="1"/>
+    <rect x="224" y="380" width="6" height="20" fill="#C8E6C9" rx="1"/>
+
+    <!-- Flames -->
+    <ellipse cx="173" cy="375" rx="4" ry="6" fill="#FFD700"/>
+    <ellipse cx="200" cy="370" rx="4" ry="6" fill="#FFD700"/>
+    <ellipse cx="227" cy="375" rx="4" ry="6" fill="#FFD700"/>
+
+    <!-- Confetti around -->
+    <rect x="60" y="350" width="10" height="4" fill="#FFE066" rx="2" transform="rotate(25 65 352)"/>
+    <rect x="340" y="370" width="10" height="4" fill="#87CEEB" rx="2" transform="rotate(-35 345 372)"/>
+    <rect x="50" y="250" width="10" height="4" fill="#C8E6C9" rx="2" transform="rotate(15 55 252)"/>
+    <rect x="350" y="280" width="10" height="4" fill="#FFB6C1" rx="2" transform="rotate(-20 355 282)"/>
+
+    <!-- Small hearts floating -->
+    <path d="M 70 450 Q 73 447, 76 450 Q 79 453, 76 456 Q 73 459, 70 456 Q 67 453, 70 450 Z"
+          fill="#DC143C" opacity="0.7"/>
+    <path d="M 330 430 Q 333 427, 336 430 Q 339 433, 336 436 Q 333 439, 330 436 Q 327 433, 330 430 Z"
+          fill="#DC143C" opacity="0.7"/>
+    <path d="M 60 200 Q 63 197, 66 200 Q 69 203, 66 206 Q 63 209, 60 206 Q 57 203, 60 200 Z"
+          fill="#FFF" opacity="0.8"/>
+    <path d="M 340 220 Q 343 217, 346 220 Q 349 223, 346 226 Q 343 229, 340 226 Q 337 223, 340 220 Z"
+          fill="#FFF" opacity="0.8"/>
+  </g>
+
+  <!-- Cutout borders on top -->
+  <path d="M 120 280 Q 110 270, 100 275 Q 90 280, 95 290 Q 100 300, 120 320 Q 140 300, 145 290 Q 150 280, 140 275 Q 130 270, 120 280 Z"
+        fill="none" stroke="#FF9BAB" stroke-width="6"/>
+  <path d="M 280 280 Q 270 270, 260 275 Q 250 280, 255 290 Q 260 300, 280 320 Q 300 300, 305 290 Q 310 280, 300 275 Q 290 270, 280 280 Z"
+        fill="none" stroke="#FF9BAB" stroke-width="6"/>
+</svg>

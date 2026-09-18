@@ -1,0 +1,112 @@
+<svg width="400" height="550" viewBox="0 0 400 550" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Balloon shine gradient -->
+    <radialGradient id="balloon-shine-pink">
+      <stop offset="0%" stop-color="#FFF" stop-opacity="0.6"/>
+      <stop offset="50%" stop-color="#FFB6C1" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#FF9BAB" stop-opacity="0"/>
+    </radialGradient>
+
+    <radialGradient id="balloon-shine-blue">
+      <stop offset="0%" stop-color="#FFF" stop-opacity="0.6"/>
+      <stop offset="50%" stop-color="#87CEEB" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#4682B4" stop-opacity="0"/>
+    </radialGradient>
+
+    <radialGradient id="balloon-shine-yellow">
+      <stop offset="0%" stop-color="#FFF" stop-opacity="0.7"/>
+      <stop offset="50%" stop-color="#FFE066" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#FFD700" stop-opacity="0"/>
+    </radialGradient>
+
+    <radialGradient id="balloon-shine-mint">
+      <stop offset="0%" stop-color="#FFF" stop-opacity="0.6"/>
+      <stop offset="50%" stop-color="#C8E6C9" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#81C784" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Balloon strings (curved, playful) -->
+  <path d="M 100 180 Q 110 320, 115 440" stroke="#D4A574" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <path d="M 200 140 Q 200 320, 200 440" stroke="#D4A574" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <path d="M 300 170 Q 290 320, 285 440" stroke="#D4A574" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <path d="M 250 160 Q 245 320, 242 440" stroke="#D4A574" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <path d="M 150 165 Q 155 320, 158 440" stroke="#D4A574" stroke-width="2" fill="none" stroke-linecap="round"/>
+
+  <!-- Back balloon - mint green -->
+  <ellipse cx="150" cy="165" rx="45" ry="52"
+           fill="#C8E6C9"
+           stroke="#81C784"
+           stroke-width="3"/>
+  <ellipse cx="150" cy="165" rx="45" ry="52"
+           fill="url(#balloon-shine-mint)"/>
+
+  <!-- Balloon knot -->
+  <path d="M 150 217 Q 145 225, 150 230" stroke="#81C784" stroke-width="3" fill="none" stroke-linecap="round"/>
+
+  <!-- Back balloon - blue -->
+  <ellipse cx="250" cy="160" rx="48" ry="55"
+           fill="#87CEEB"
+           stroke="#4682B4"
+           stroke-width="3"/>
+  <ellipse cx="250" cy="160" rx="48" ry="55"
+           fill="url(#balloon-shine-blue)"/>
+
+  <!-- Balloon knot -->
+  <path d="M 250 215 Q 245 223, 250 228" stroke="#4682B4" stroke-width="3" fill="none" stroke-linecap="round"/>
+
+  <!-- Front balloon - pink (left) -->
+  <ellipse cx="100" cy="180" rx="50" ry="58"
+           fill="#FFB6C1"
+           stroke="#FF9BAB"
+           stroke-width="3"/>
+  <ellipse cx="100" cy="180" rx="50" ry="58"
+           fill="url(#balloon-shine-pink)"/>
+
+  <!-- Balloon knot -->
+  <path d="M 100 238 Q 95 246, 100 251" stroke="#FF9BAB" stroke-width="3" fill="none" stroke-linecap="round"/>
+
+  <!-- Front balloon - yellow (center) -->
+  <ellipse cx="200" cy="140" rx="52" ry="60"
+           fill="#FFE066"
+           stroke="#FFD700"
+           stroke-width="3"/>
+  <ellipse cx="200" cy="140" rx="52" ry="60"
+           fill="url(#balloon-shine-yellow)"/>
+
+  <!-- Balloon knot -->
+  <path d="M 200 200 Q 195 208, 200 213" stroke="#FFD700" stroke-width="3" fill="none" stroke-linecap="round"/>
+
+  <!-- Front balloon - pink (right) -->
+  <ellipse cx="300" cy="170" rx="48" ry="56"
+           fill="#FFB6C1"
+           stroke="#FF9BAB"
+           stroke-width="3"/>
+  <ellipse cx="300" cy="170" rx="48" ry="56"
+           fill="url(#balloon-shine-pink)"/>
+
+  <!-- Balloon knot -->
+  <path d="M 300 226 Q 295 234, 300 239" stroke="#FF9BAB" stroke-width="3" fill="none" stroke-linecap="round"/>
+
+  <!-- String bundle at bottom -->
+  <circle cx="200" cy="445" r="12"
+          fill="#D4A574"
+          stroke="#B88E5F"
+          stroke-width="2"/>
+
+  <!-- Little confetti pieces floating around -->
+  <rect x="70" y="250" width="6" height="3" fill="#FFE066" rx="1" transform="rotate(35 73 251.5)"/>
+  <rect x="330" y="270" width="6" height="3" fill="#FFB6C1" rx="1" transform="rotate(-25 333 271.5)"/>
+  <rect x="180" y="90" width="6" height="3" fill="#87CEEB" rx="1" transform="rotate(15 183 91.5)"/>
+  <rect x="320" y="120" width="6" height="3" fill="#C8E6C9" rx="1" transform="rotate(-45 323 121.5)"/>
+  <circle cx="85" cy="130" r="3" fill="#FFD700" opacity="0.7"/>
+  <circle cx="315" cy="110" r="3" fill="#FF9BAB" opacity="0.7"/>
+
+  <!-- Subtle "Happy Birthday" text curved along balloon arc (optional) -->
+  <path id="text-path" d="M 100 100 Q 200 60, 300 100" fill="none"/>
+  <text font-family="Caveat" font-size="24" font-weight="700" fill="#4A3826" opacity="0.8">
+    <textPath href="#text-path" startOffset="50%" text-anchor="middle">
+      Happy Birthday!
+    </textPath>
+  </text>
+</svg>
