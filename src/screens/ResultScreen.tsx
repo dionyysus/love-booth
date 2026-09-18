@@ -1,6 +1,6 @@
 import type { AppSession } from '../types'
 import { useEffect, useState, useRef } from 'react'
-import { ref, remove } from 'firebase/database'
+import { ref, remove, onValue } from 'firebase/database'
 import { database } from '../lib/firebase'
 
 type Props = {
@@ -11,29 +11,60 @@ type Props = {
 export function ResultScreen({ session, setSession }: Props) {
   const [stripDataUrl, setStripDataUrl] = useState<string | null>(null)
   const [showPhoto, setShowPhoto] = useState(false)
+  const [partnerPhotos, setPartnerPhotos] = useState<string[]>([])
   const canvasRef = useRef<HTMLCanvasElement>(null)
+
+  const isSoloMode = session.sessionCode === 'solo'
+
+  // Load partner's photos from Firebase (for paired mode)
+  useEffect(() => {
+    if (isSoloMode || !session.sessionCode) return
+
+    const partnerKey = session.role === 'host' ? 'guestPhotos' : 'hostPhotos'
+    const photosRef = ref(database, `sessions/${session.sessionCode}/${partnerKey}`)
+
+    const unsubscribe = onValue(photosRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.val()
+        // Convert object to array
+        const photos = Object.values(data) as string[]
+        setPartnerPhotos(photos)
+      }
+    })
+
+    return () => unsubscribe()
+  }, [session.sessionCode, session.role, isSoloMode])
 
   // Generate photo strip
   useEffect(() => {
     if (!canvasRef.current) return
 
-    // Use local photos (works for both solo and paired mode)
-    const photos = session.localPhotos
-    if (photos.length === 0) return
+    const myPhotos = session.localPhotos
+    if (myPhotos.length === 0) return
+
+    // For paired mode, wait for partner photos (max 4)
+    if (!isSoloMode && partnerPhotos.length < Math.min(4, myPhotos.length)) {
+      return // Wait for partner photos
+    }
 
     const canvas = canvasRef.current
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
-    // Strip dimensions (single column)
     const photoWidth = 200
     const photoHeight = 250
-    const stripWidth = photoWidth
-    const stripHeight = photoHeight * photos.length
     const padding = 20
+    const photosToUse = Math.min(4, myPhotos.length)
 
-    canvas.width = stripWidth + padding * 2
-    canvas.height = stripHeight + padding * 2
+    if (isSoloMode) {
+      // Solo mode: single column
+      canvas.width = photoWidth + padding * 2
+      canvas.height = photoHeight * photosToUse + padding * 2
+    } else {
+      // Paired mode: two columns side by side
+      canvas.width = photoWidth * 2 + padding * 2
+      canvas.height = photoHeight * photosToUse + padding * 2
+    }
 
     // White background
     ctx.fillStyle = '#FFFFFF'
@@ -41,15 +72,18 @@ export function ResultScreen({ session, setSession }: Props) {
 
     // Load and draw photos
     const loadPhotos = async () => {
-      for (let i = 0; i < photos.length; i++) {
-        const img = await loadImage(photos[i])
-        ctx.drawImage(
-          img,
-          padding,
-          padding + i * photoHeight,
-          photoWidth,
-          photoHeight
-        )
+      for (let i = 0; i < photosToUse; i++) {
+        // My photo (left side in paired, center in solo)
+        const myImg = await loadImage(myPhotos[i])
+        const myX = isSoloMode ? padding : (session.role === 'host' ? padding : padding + photoWidth)
+        ctx.drawImage(myImg, myX, padding + i * photoHeight, photoWidth, photoHeight)
+
+        // Partner's photo (right side in paired mode)
+        if (!isSoloMode && partnerPhotos[i]) {
+          const partnerImg = await loadImage(partnerPhotos[i])
+          const partnerX = session.role === 'host' ? padding + photoWidth : padding
+          ctx.drawImage(partnerImg, partnerX, padding + i * photoHeight, photoWidth, photoHeight)
+        }
       }
 
       // Convert to data URL
@@ -57,7 +91,7 @@ export function ResultScreen({ session, setSession }: Props) {
     }
 
     loadPhotos()
-  }, [session.localPhotos])
+  }, [session.localPhotos, partnerPhotos, isSoloMode, session.role])
 
   // Animate photo delivery after strip is generated
   useEffect(() => {

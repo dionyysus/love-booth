@@ -22,6 +22,7 @@ export function SessionScreen({ session, setSession }: Props) {
   const [localPhotos, setLocalPhotos] = useState<string[]>([])
   const isCapturingRef = useRef(false)
   const capturedPhotosRef = useRef<string[]>([])
+  const lastCapturedShotRef = useRef<number>(-1)
 
   const isSoloMode = session.sessionCode === 'solo'
 
@@ -206,14 +207,35 @@ export function SessionScreen({ session, setSession }: Props) {
 
   // Capture photo when countdown hits 0
   useEffect(() => {
-    if (countdown === 0 && status === 'active') {
+    if (countdown === 0 && status === 'active' && currentShot !== lastCapturedShotRef.current) {
+      lastCapturedShotRef.current = currentShot
       const photo = captureFrame()
       if (photo) {
         setLocalPhotos((prev) => [...prev, photo])
         capturedPhotosRef.current.push(photo)
+
+        // Upload compressed photo to Firebase for partner to see
+        if (session.sessionCode && session.sessionCode !== 'solo') {
+          const photoKey = session.role === 'host' ? 'hostPhotos' : 'guestPhotos'
+          const sessionRef = ref(database, `sessions/${session.sessionCode}/${photoKey}/${currentShot}`)
+          // Compress photo for Firebase (smaller size)
+          const canvas = document.createElement('canvas')
+          const img = new Image()
+          img.onload = () => {
+            canvas.width = 200
+            canvas.height = 250
+            const ctx = canvas.getContext('2d')
+            if (ctx) {
+              ctx.drawImage(img, 0, 0, 200, 250)
+              const compressed = canvas.toDataURL('image/jpeg', 0.5)
+              set(sessionRef, compressed)
+            }
+          }
+          img.src = photo
+        }
       }
     }
-  }, [countdown, status, captureFrame])
+  }, [countdown, status, captureFrame, currentShot, session.sessionCode, session.role])
 
   const bothReady = sessionData?.hostReady && sessionData?.guestReady
   const isCapturing = countdown !== null
