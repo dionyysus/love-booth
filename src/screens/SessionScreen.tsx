@@ -20,10 +20,8 @@ export function SessionScreen({ session, setSession }: Props) {
   const [countdown, setCountdown] = useState<number | null>(null)
   const [currentShot, setCurrentShot] = useState(0)
   const [localPhotos, setLocalPhotos] = useState<string[]>([])
-  const [partnerPreview, setPartnerPreview] = useState<string | null>(null)
   const isCapturingRef = useRef(false)
   const capturedPhotosRef = useRef<string[]>([])
-  const previewIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const isSoloMode = session.sessionCode === 'solo'
 
@@ -33,30 +31,6 @@ export function SessionScreen({ session, setSession }: Props) {
     return () => stopCamera()
   }, [startCamera, stopCamera])
 
-  // Send preview frames to partner (skip in solo mode)
-  useEffect(() => {
-    if (!session.sessionCode || isSoloMode || status !== 'active') return
-
-    const sendPreview = () => {
-      const preview = captureFrame()
-      if (preview && sessionData) {
-        const previewKey = session.role === 'host' ? 'hostPreview' : 'guestPreview'
-        const sessionRef = ref(database, `sessions/${session.sessionCode}`)
-        update(sessionRef, {
-          [previewKey]: preview,
-        })
-      }
-    }
-
-    // Send preview every 500ms
-    previewIntervalRef.current = setInterval(sendPreview, 500)
-
-    return () => {
-      if (previewIntervalRef.current) {
-        clearInterval(previewIntervalRef.current)
-      }
-    }
-  }, [session.sessionCode, session.role, isSoloMode, status, captureFrame, sessionData])
 
   // Listen for session updates (skip in solo mode)
   useEffect(() => {
@@ -67,12 +41,6 @@ export function SessionScreen({ session, setSession }: Props) {
       if (snapshot.exists()) {
         const parsed: SessionData = snapshot.val()
         setSessionData(parsed)
-
-        // Update partner preview
-        const partnerPreviewKey = session.role === 'host' ? 'guestPreview' : 'hostPreview'
-        if (parsed[partnerPreviewKey]) {
-          setPartnerPreview(parsed[partnerPreviewKey])
-        }
 
         // Check if both ready and start countdown
         if (parsed.hostReady && parsed.guestReady && parsed.countdown !== null) {
@@ -271,48 +239,32 @@ export function SessionScreen({ session, setSession }: Props) {
       )}
 
       {/* Camera preview */}
-      {isSoloMode ? (
-        <div className="relative w-full max-w-4xl aspect-[16/9] bg-gray-900 rounded-lg overflow-hidden mb-8">
-          <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            muted
-            className="absolute inset-0 w-full h-full object-cover scale-x-[-1]"
-          />
-        </div>
-      ) : (
-        <div className="relative w-full max-w-6xl mb-8 flex gap-4">
-          {/* Your camera */}
-          <div className="relative flex-1 aspect-[4/3] bg-gray-900 rounded-lg overflow-hidden">
-            <video
-              ref={videoRef}
-              autoPlay
-              playsInline
-              muted
-              className="absolute inset-0 w-full h-full object-cover scale-x-[-1]"
-            />
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white text-xs font-light tracking-wide bg-black/50 px-3 py-1 rounded">
-              you
-            </div>
+      <div className="relative w-full max-w-4xl aspect-[16/9] bg-gray-900 rounded-lg overflow-hidden mb-8">
+        <video
+          ref={videoRef}
+          autoPlay
+          playsInline
+          muted
+          className="absolute inset-0 w-full h-full object-cover scale-x-[-1]"
+        />
+        {!isSoloMode && (
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white text-xs font-light tracking-wide bg-black/50 px-3 py-1 rounded">
+            your camera
           </div>
+        )}
+      </div>
 
-          {/* Partner's camera */}
-          <div className="relative flex-1 aspect-[4/3] bg-gray-900 rounded-lg overflow-hidden">
-            {partnerPreview ? (
-              <img
-                src={partnerPreview}
-                alt="partner"
-                className="absolute inset-0 w-full h-full object-cover"
-              />
-            ) : (
-              <div className="absolute inset-0 flex items-center justify-center text-white/30 text-sm">
-                waiting for partner...
-              </div>
-            )}
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white text-xs font-light tracking-wide bg-black/50 px-3 py-1 rounded">
-              partner
-            </div>
+      {/* Partner status (only in paired mode) */}
+      {!isSoloMode && (
+        <div className="mb-8 flex items-center gap-4 text-white text-sm">
+          <div className="flex items-center gap-2">
+            <div className={`w-3 h-3 rounded-full ${sessionData?.hostReady ? 'bg-green-500' : 'bg-white/30'}`}></div>
+            <span className="text-white/70">{session.role === 'host' ? 'you' : 'partner'}</span>
+          </div>
+          <div className="text-white/30">+</div>
+          <div className="flex items-center gap-2">
+            <div className={`w-3 h-3 rounded-full ${sessionData?.guestReady ? 'bg-green-500' : 'bg-white/30'}`}></div>
+            <span className="text-white/70">{session.role === 'guest' ? 'you' : 'partner'}</span>
           </div>
         </div>
       )}
