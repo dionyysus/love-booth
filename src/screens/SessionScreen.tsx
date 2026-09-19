@@ -156,19 +156,19 @@ export function SessionScreen({ session, setSession }: Props) {
     capturedPhotosRef.current.push(photo)
     setLocalPhotos([...capturedPhotosRef.current])
 
-    // Upload compressed photo to Firebase for partner
+    // Upload higher quality photo to Firebase for partner
     if (session.sessionCode && !isSoloMode) {
       const photoKey = session.role === 'host' ? 'hostPhotos' : 'guestPhotos'
       const video = videoRef.current
       if (video) {
         const canvas = document.createElement('canvas')
-        canvas.width = 200
-        canvas.height = 250
+        canvas.width = 400
+        canvas.height = 500
         const ctx = canvas.getContext('2d')
         if (ctx) {
           ctx.scale(-1, 1)
-          ctx.drawImage(video, -200, 0, 200, 250)
-          const compressed = canvas.toDataURL('image/jpeg', 0.5)
+          ctx.drawImage(video, -400, 0, 400, 500)
+          const compressed = canvas.toDataURL('image/jpeg', 0.75)
           set(ref(database, `sessions/${session.sessionCode}/${photoKey}/${currentShot}`), compressed)
         }
       }

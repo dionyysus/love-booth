@@ -51,9 +51,9 @@ export function ResultScreen({ session, setSession }: Props) {
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
-    const photoWidth = 200
-    const photoHeight = 250
-    const padding = 20
+    const photoWidth = 400
+    const photoHeight = 500
+    const padding = 30
     const photosToUse = Math.min(4, myPhotos.length)
 
     if (isSoloMode) {
