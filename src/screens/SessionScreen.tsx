@@ -76,12 +76,15 @@ export function SessionScreen({ session, setSession }: Props) {
         }
 
         if (parsed.status === 'complete') {
-          setSession((s) => ({
-            ...s,
-            screen: 'result',
-            localPhotos: capturedPhotosRef.current,
-            partnerPhotos: partnerPhotosRef.current,
-          }))
+          // Wait a moment for any remaining photos to arrive via WebRTC
+          setTimeout(() => {
+            setSession((s) => ({
+              ...s,
+              screen: 'result',
+              localPhotos: capturedPhotosRef.current,
+              partnerPhotos: [...partnerPhotosRef.current], // Create a copy to ensure state update
+            }))
+          }, 1500) // Give photos time to transfer
         }
       }
     })

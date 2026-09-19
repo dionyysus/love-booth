@@ -29,6 +29,7 @@ export function useWebRTC(
   const hasCreatedOffer = useRef(false)
   const hasAnswered = useRef(false)
   const iceCandidatesQueue = useRef<RTCIceCandidate[]>([])
+  const pendingPhotos = useRef<{ photo: string; index: number }[]>([])
 
   // Clean up function
   const cleanup = useCallback(() => {
@@ -46,14 +47,74 @@ export function useWebRTC(
     hasCreatedOffer.current = false
     hasAnswered.current = false
     iceCandidatesQueue.current = []
+    pendingPhotos.current = []
   }, [])
+
+  // Send a single photo through the data channel with chunking for large messages
+  const sendPhotoData = useCallback((channel: RTCDataChannel, photo: string, index: number) => {
+    const message = JSON.stringify({ type: 'photo', photo, index })
+    const CHUNK_SIZE = 16000 // Safe chunk size for WebRTC
+
+    if (message.length <= CHUNK_SIZE) {
+      channel.send(message)
+    } else {
+      // Send in chunks
+      const chunks = Math.ceil(message.length / CHUNK_SIZE)
+      const messageId = Date.now()
+
+      for (let i = 0; i < chunks; i++) {
+        const chunk = message.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE)
+        channel.send(JSON.stringify({
+          type: 'chunk',
+          messageId,
+          chunkIndex: i,
+          totalChunks: chunks,
+          data: chunk,
+        }))
+      }
+    }
+  }, [])
+
+  // Reassemble chunked messages
+  const chunkedMessages = useRef<Map<number, { chunks: string[]; received: number; total: number }>>(new Map())
 
   // Handle incoming data channel messages
   const setupDataChannel = useCallback((channel: RTCDataChannel) => {
     channel.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data)
-        if (data.type === 'photo' && onPhotoReceived) {
+
+        if (data.type === 'chunk') {
+          // Handle chunked message
+          const { messageId, chunkIndex, totalChunks, data: chunkData } = data
+
+          if (!chunkedMessages.current.has(messageId)) {
+            chunkedMessages.current.set(messageId, {
+              chunks: new Array(totalChunks).fill(''),
+              received: 0,
+              total: totalChunks,
+            })
+          }
+
+          const msg = chunkedMessages.current.get(messageId)!
+          msg.chunks[chunkIndex] = chunkData
+          msg.received++
+
+          if (msg.received === msg.total) {
+            // All chunks received, reassemble
+            const fullMessage = msg.chunks.join('')
+            chunkedMessages.current.delete(messageId)
+
+            try {
+              const parsed = JSON.parse(fullMessage)
+              if (parsed.type === 'photo' && onPhotoReceived) {
+                onPhotoReceived(parsed.photo, parsed.index)
+              }
+            } catch (err) {
+              console.error('Error parsing reassembled message:', err)
+            }
+          }
+        } else if (data.type === 'photo' && onPhotoReceived) {
           onPhotoReceived(data.photo, data.index)
         }
       } catch (err) {
@@ -62,12 +123,20 @@ export function useWebRTC(
     }
     channel.onopen = () => {
       console.log('Data channel opened')
+      // Send any pending photos
+      while (pendingPhotos.current.length > 0) {
+        const pending = pendingPhotos.current.shift()!
+        sendPhotoData(channel, pending.photo, pending.index)
+      }
     }
     channel.onclose = () => {
       console.log('Data channel closed')
     }
+    channel.onerror = (err) => {
+      console.error('Data channel error:', err)
+    }
     dataChannelRef.current = channel
-  }, [onPhotoReceived])
+  }, [onPhotoReceived, sendPhotoData])
 
   // Create peer connection
   const createPeerConnection = useCallback(() => {
@@ -296,12 +365,17 @@ export function useWebRTC(
     }
   }, [sessionCode, cleanup])
 
-  // Send photo through data channel
+  // Send photo through data channel (with queuing if not ready)
   const sendPhoto = useCallback((photo: string, index: number) => {
-    if (dataChannelRef.current && dataChannelRef.current.readyState === 'open') {
-      dataChannelRef.current.send(JSON.stringify({ type: 'photo', photo, index }))
+    const channel = dataChannelRef.current
+    if (channel && channel.readyState === 'open') {
+      sendPhotoData(channel, photo, index)
+    } else {
+      // Queue for later when channel opens
+      console.log('Data channel not ready, queuing photo', index)
+      pendingPhotos.current.push({ photo, index })
     }
-  }, [])
+  }, [sendPhotoData])
 
   return {
     remoteStream,

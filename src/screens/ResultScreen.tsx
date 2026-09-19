@@ -169,7 +169,9 @@ export function ResultScreen({ session, setSession }: Props) {
     const myPhotos = session.localPhotos
     if (myPhotos.length === 0) return
 
-    if (!isSoloMode && partnerPhotos.length < Math.min(4, myPhotos.length)) {
+    // Count actual partner photos (not undefined values)
+    const actualPartnerPhotos = partnerPhotos.filter(p => p).length
+    if (!isSoloMode && actualPartnerPhotos < Math.min(4, myPhotos.length)) {
       return
     }
 
