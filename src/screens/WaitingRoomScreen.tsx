@@ -43,6 +43,7 @@ export function WaitingRoomScreen({ session, setSession }: Props) {
       role: null,
       sessionCode: null,
       localPhotos: [],
+      partnerPhotos: [],
     })
   }
 
@@ -50,63 +51,106 @@ export function WaitingRoomScreen({ session, setSession }: Props) {
   const partnerJoined = sessionData?.hostJoined && sessionData?.guestJoined
 
   return (
-    <div className="flex flex-1 flex-col items-center justify-center min-h-screen px-4 py-8">
-      {/* Back button */}
-      <button
-        onClick={handleBack}
-        className="absolute top-8 left-8 text-sm text-gray-400 hover:text-gray-900 transition-colors"
-      >
-        ← back
-      </button>
-
-      {/* Title */}
-      <h1 className="text-3xl font-light tracking-tight text-gray-900 mb-12">
-        {isHost ? 'waiting for partner' : 'joined session'}
-      </h1>
-
-      {/* Session code display (only for host) */}
-      {isHost && session.sessionCode && (
-        <div className="mb-16">
-          <p className="text-xs text-gray-400 uppercase tracking-widest mb-4 text-center">
-            share this code
-          </p>
-          <div className="px-12 py-6 bg-black text-white font-mono text-5xl tracking-widest">
-            {session.sessionCode}
-          </div>
-        </div>
-      )}
-
-      {/* Status */}
-      <div className="flex items-center gap-4">
-        {/* You */}
-        <div className="text-center">
-          <div className="w-16 h-16 rounded-full bg-black mb-2"></div>
-          <p className="text-xs text-gray-600">you</p>
-        </div>
-
-        {/* Connecting line */}
-        <div className="w-24 h-px bg-gray-300 relative">
-          {partnerJoined && (
-            <div className="absolute inset-0 bg-black animate-pulse"></div>
-          )}
-        </div>
-
-        {/* Partner */}
-        <div className="text-center">
-          <div className={`w-16 h-16 rounded-full mb-2 transition-colors ${
-            partnerJoined ? 'bg-black' : 'bg-gray-200'
-          }`}></div>
-          <p className="text-xs text-gray-600">
-            {partnerJoined ? 'partner' : 'waiting...'}
-          </p>
-        </div>
+    <div className="flex flex-1 flex-col items-center justify-between min-h-screen px-4 py-12">
+      {/* Top section */}
+      <div className="flex items-center justify-between w-full">
+        <button
+          onClick={handleBack}
+          className="text-xs tracking-widest uppercase hover:opacity-70 transition-opacity"
+          style={{ color: '#a08870' }}
+        >
+          ← back
+        </button>
+        <p
+          className="text-xs tracking-widest uppercase"
+          style={{ color: '#c4a484', letterSpacing: '0.2em' }}
+        >
+          step 2
+        </p>
       </div>
 
-      {partnerJoined && (
-        <p className="mt-8 text-sm text-gray-600 animate-pulse">
-          starting session...
-        </p>
-      )}
+      {/* Center section */}
+      <div className="flex flex-col items-center">
+        {/* Title */}
+        <h1
+          className="text-xl sm:text-2xl font-normal tracking-wide mb-10 italic"
+          style={{ fontFamily: "'Playfair Display', serif", color: '#8b7355' }}
+        >
+          {isHost ? 'waiting for partner' : 'joined session'}
+        </h1>
+
+        {/* Session code display (only for host) */}
+        {isHost && session.sessionCode && (
+          <div className="mb-12 text-center">
+            <p
+              className="text-xs tracking-widest uppercase mb-4"
+              style={{ color: '#a08870', letterSpacing: '0.2em' }}
+            >
+              share this code
+            </p>
+            <div
+              className="px-10 py-5 font-mono text-4xl tracking-widest"
+              style={{
+                color: '#8b7355',
+                border: '1px solid #c4a484',
+                borderRadius: '2px'
+              }}
+            >
+              {session.sessionCode}
+            </div>
+          </div>
+        )}
+
+        {/* Status */}
+        <div className="flex items-center gap-6">
+          {/* You */}
+          <div className="text-center">
+            <div
+              className="w-12 h-12 rounded-full mb-2"
+              style={{ backgroundColor: '#8b7355' }}
+            />
+            <p className="text-xs" style={{ color: '#a08870' }}>you</p>
+          </div>
+
+          {/* Connecting line */}
+          <div className="w-16 relative" style={{ height: '1px', backgroundColor: '#c4a484' }}>
+            {partnerJoined && (
+              <div
+                className="absolute inset-0 animate-pulse"
+                style={{ backgroundColor: '#8b7355' }}
+              />
+            )}
+          </div>
+
+          {/* Partner */}
+          <div className="text-center">
+            <div
+              className="w-12 h-12 rounded-full mb-2 transition-colors"
+              style={{ backgroundColor: partnerJoined ? '#8b7355' : '#e8e0d5' }}
+            />
+            <p className="text-xs" style={{ color: '#a08870' }}>
+              {partnerJoined ? 'partner' : 'waiting...'}
+            </p>
+          </div>
+        </div>
+
+        {partnerJoined && (
+          <p
+            className="mt-8 text-xs tracking-wide animate-pulse italic"
+            style={{ color: '#8b7355' }}
+          >
+            starting session...
+          </p>
+        )}
+      </div>
+
+      {/* Footer */}
+      <p
+        className="text-xs tracking-wide"
+        style={{ color: '#d4c4b4' }}
+      >
+        made with love
+      </p>
     </div>
   )
 }

@@ -1,8 +1,8 @@
 import type { AppSession, SessionData } from '../types'
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { useCamera } from '../hooks/useCamera'
 import { useWebRTC } from '../hooks/useWebRTC'
-import { ref, onValue, set, update } from 'firebase/database'
+import { ref, onValue, update } from 'firebase/database'
 import { database } from '../lib/firebase'
 
 type Props = {
@@ -22,11 +22,20 @@ export function SessionScreen({ session, setSession }: Props) {
   const [currentShot, setCurrentShot] = useState(0)
   const [localPhotos, setLocalPhotos] = useState<string[]>([])
 
-  // WebRTC for real-time partner video
-  const { remoteStream, state: webrtcState } = useWebRTC(
+  // Partner photos received via WebRTC data channel
+  const partnerPhotosRef = useRef<string[]>([])
+
+  // Callback for receiving photos from partner via data channel
+  const handlePhotoReceived = useCallback((photo: string, index: number) => {
+    partnerPhotosRef.current[index] = photo
+  }, [])
+
+  // WebRTC for real-time partner video and photo sharing
+  const { remoteStream, state: webrtcState, sendPhoto } = useWebRTC(
     session.sessionCode,
     session.role,
-    stream
+    stream,
+    handlePhotoReceived
   )
   const partnerVideoRef = useRef<HTMLVideoElement | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
@@ -71,6 +80,7 @@ export function SessionScreen({ session, setSession }: Props) {
             ...s,
             screen: 'result',
             localPhotos: capturedPhotosRef.current,
+            partnerPhotos: partnerPhotosRef.current,
           }))
         }
       }
@@ -157,9 +167,8 @@ export function SessionScreen({ session, setSession }: Props) {
     capturedPhotosRef.current.push(photo)
     setLocalPhotos([...capturedPhotosRef.current])
 
-    // Upload higher quality photo to Firebase for partner
-    if (session.sessionCode && !isSoloMode) {
-      const photoKey = session.role === 'host' ? 'hostPhotos' : 'guestPhotos'
+    // Send photo to partner via WebRTC data channel
+    if (!isSoloMode) {
       const video = videoRef.current
       if (video) {
         const canvas = document.createElement('canvas')
@@ -170,11 +179,11 @@ export function SessionScreen({ session, setSession }: Props) {
           ctx.scale(-1, 1)
           ctx.drawImage(video, -600, 0, 600, 750)
           const compressed = canvas.toDataURL('image/jpeg', 0.85)
-          set(ref(database, `sessions/${session.sessionCode}/${photoKey}/${currentShot}`), compressed)
+          sendPhoto(compressed, currentShot)
         }
       }
     }
-  }, [countdown, status, currentShot, captureFrame, session.sessionCode, session.role, isSoloMode, videoRef])
+  }, [countdown, status, currentShot, captureFrame, isSoloMode, videoRef, sendPhoto])
 
   // Handle ready button
   const handleReady = async () => {
@@ -206,7 +215,7 @@ export function SessionScreen({ session, setSession }: Props) {
         }
       }
 
-      setSession(s => ({ ...s, screen: 'result', localPhotos: capturedPhotosRef.current }))
+      setSession(s => ({ ...s, screen: 'result', localPhotos: capturedPhotosRef.current, partnerPhotos: [] }))
       return
     }
 
@@ -232,15 +241,13 @@ export function SessionScreen({ session, setSession }: Props) {
       reader.onload = (event) => {
         const dataUrl = event.target?.result as string
         if (dataUrl && capturedPhotosRef.current.length < SHOTS_COUNT) {
+          const shotIndex = capturedPhotosRef.current.length
           capturedPhotosRef.current.push(dataUrl)
           setLocalPhotos([...capturedPhotosRef.current])
 
-          // Upload to Firebase for partner (if paired mode)
-          if (session.sessionCode && !isSoloMode) {
-            const photoKey = session.role === 'host' ? 'hostPhotos' : 'guestPhotos'
-            const shotIndex = capturedPhotosRef.current.length - 1
-
-            // Compress and upload
+          // Send to partner via WebRTC data channel (if paired mode)
+          if (!isSoloMode) {
+            // Compress and send
             const img = new Image()
             img.onload = () => {
               const canvas = document.createElement('canvas')
@@ -250,7 +257,7 @@ export function SessionScreen({ session, setSession }: Props) {
               if (ctx) {
                 ctx.drawImage(img, 0, 0, 600, 750)
                 const compressed = canvas.toDataURL('image/jpeg', 0.85)
-                set(ref(database, `sessions/${session.sessionCode}/${photoKey}/${shotIndex}`), compressed)
+                sendPhoto(compressed, shotIndex)
               }
             }
             img.src = dataUrl
@@ -259,7 +266,7 @@ export function SessionScreen({ session, setSession }: Props) {
           // If we have all 4 photos, go to result
           if (capturedPhotosRef.current.length >= SHOTS_COUNT) {
             if (isSoloMode) {
-              setSession(s => ({ ...s, screen: 'result', localPhotos: capturedPhotosRef.current }))
+              setSession(s => ({ ...s, screen: 'result', localPhotos: capturedPhotosRef.current, partnerPhotos: [] }))
             }
           }
         }

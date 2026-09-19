@@ -17,19 +17,25 @@ type WebRTCState = 'idle' | 'connecting' | 'connected' | 'failed'
 export function useWebRTC(
   sessionCode: string | null,
   role: ParticipantRole | null,
-  localStream: MediaStream | null
+  localStream: MediaStream | null,
+  onPhotoReceived?: (photo: string, index: number) => void
 ) {
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null)
   const [state, setState] = useState<WebRTCState>('idle')
 
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null)
   const remoteStreamRef = useRef<MediaStream | null>(null)
+  const dataChannelRef = useRef<RTCDataChannel | null>(null)
   const hasCreatedOffer = useRef(false)
   const hasAnswered = useRef(false)
   const iceCandidatesQueue = useRef<RTCIceCandidate[]>([])
 
   // Clean up function
   const cleanup = useCallback(() => {
+    if (dataChannelRef.current) {
+      dataChannelRef.current.close()
+      dataChannelRef.current = null
+    }
     if (peerConnectionRef.current) {
       peerConnectionRef.current.close()
       peerConnectionRef.current = null
@@ -42,6 +48,27 @@ export function useWebRTC(
     iceCandidatesQueue.current = []
   }, [])
 
+  // Handle incoming data channel messages
+  const setupDataChannel = useCallback((channel: RTCDataChannel) => {
+    channel.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data)
+        if (data.type === 'photo' && onPhotoReceived) {
+          onPhotoReceived(data.photo, data.index)
+        }
+      } catch (err) {
+        console.error('Error parsing data channel message:', err)
+      }
+    }
+    channel.onopen = () => {
+      console.log('Data channel opened')
+    }
+    channel.onclose = () => {
+      console.log('Data channel closed')
+    }
+    dataChannelRef.current = channel
+  }, [onPhotoReceived])
+
   // Create peer connection
   const createPeerConnection = useCallback(() => {
     if (peerConnectionRef.current) return peerConnectionRef.current
@@ -51,6 +78,17 @@ export function useWebRTC(
     // Create remote stream container
     remoteStreamRef.current = new MediaStream()
     setRemoteStream(remoteStreamRef.current)
+
+    // Host creates the data channel
+    if (role === 'host') {
+      const channel = pc.createDataChannel('photos')
+      setupDataChannel(channel)
+    }
+
+    // Guest receives the data channel
+    pc.ondatachannel = (event) => {
+      setupDataChannel(event.channel)
+    }
 
     // Handle incoming tracks
     pc.ontrack = (event) => {
@@ -89,7 +127,7 @@ export function useWebRTC(
 
     peerConnectionRef.current = pc
     return pc
-  }, [sessionCode, role])
+  }, [sessionCode, role, setupDataChannel])
 
   // Add local stream to peer connection
   useEffect(() => {
@@ -258,9 +296,17 @@ export function useWebRTC(
     }
   }, [sessionCode, cleanup])
 
+  // Send photo through data channel
+  const sendPhoto = useCallback((photo: string, index: number) => {
+    if (dataChannelRef.current && dataChannelRef.current.readyState === 'open') {
+      dataChannelRef.current.send(JSON.stringify({ type: 'photo', photo, index }))
+    }
+  }, [])
+
   return {
     remoteStream,
     state,
     cleanup,
+    sendPhoto,
   }
 }

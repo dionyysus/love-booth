@@ -16,10 +16,6 @@ export type SessionData = {
   guestReady: boolean
   countdown: number | null
   currentShot: number
-  hostPhotos: string[]
-  guestPhotos: string[]
-  hostPreview?: string
-  guestPreview?: string
   status: 'waiting' | 'ready' | 'capturing' | 'complete'
   createdAt: number
   lastUpdate: number
@@ -30,6 +26,7 @@ export type AppSession = {
   role: ParticipantRole | null
   sessionCode: string | null
   localPhotos: string[]
+  partnerPhotos: string[]
 }
 
 export const initialAppSession: AppSession = {
@@ -37,4 +34,5 @@ export const initialAppSession: AppSession = {
   role: null,
   sessionCode: null,
   localPhotos: [],
+  partnerPhotos: [],
 }

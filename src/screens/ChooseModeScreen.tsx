@@ -22,10 +22,6 @@ export function ChooseModeScreen({ setSession }: Props) {
       guestReady: false,
       countdown: null,
       currentShot: 0,
-      hostPhotos: [],
-      guestPhotos: [],
-      hostPreview: '',
-      guestPreview: '',
       status: 'waiting' as const,
       createdAt: Date.now(),
       lastUpdate: Date.now(),
@@ -38,6 +34,7 @@ export function ChooseModeScreen({ setSession }: Props) {
         role: 'host',
         sessionCode: code,
         localPhotos: [],
+        partnerPhotos: [],
       })
     } catch (error) {
       console.error('Failed to create session:', error)
@@ -64,6 +61,7 @@ export function ChooseModeScreen({ setSession }: Props) {
           role: 'guest',
           sessionCode: code,
           localPhotos: [],
+          partnerPhotos: [],
         })
       } else {
         alert('session not found')
@@ -80,6 +78,7 @@ export function ChooseModeScreen({ setSession }: Props) {
       role: 'host',
       sessionCode: 'solo',
       localPhotos: [],
+      partnerPhotos: [],
     })
   }
 
@@ -88,79 +87,104 @@ export function ChooseModeScreen({ setSession }: Props) {
   }
 
   return (
-    <div className="flex flex-1 flex-col items-center justify-center min-h-screen px-4 py-8">
-      {/* Back button */}
-      <button
-        onClick={handleBack}
-        className="absolute top-6 left-6 text-sm text-gray-400 hover:text-gray-600 transition-colors"
-      >
-        &larr; back
-      </button>
-
-      {/* Title */}
-      <h2
-        className="text-2xl sm:text-3xl font-normal tracking-wide mb-12"
-        style={{ fontFamily: "'Playfair Display', serif", color: '#8b7355' }}
-      >
-        choose your mode
-      </h2>
-
-      {/* Mode options */}
-      <div className="flex flex-col gap-6 w-full max-w-sm">
-        {/* Solo */}
+    <div className="flex flex-1 flex-col items-center justify-between min-h-screen px-4 py-12">
+      {/* Top section */}
+      <div className="flex items-center justify-between w-full">
         <button
-          onClick={handleSoloMode}
-          className="w-full px-8 py-6 border-2 border-gray-200 rounded-2xl hover:border-gray-400 transition-colors text-left"
+          onClick={handleBack}
+          className="text-xs tracking-widest uppercase hover:opacity-70 transition-opacity"
+          style={{ color: '#a08870' }}
         >
-          <p className="text-lg font-medium text-gray-900 mb-1">solo</p>
-          <p className="text-sm text-gray-500">take photos by yourself</p>
+          ← back
         </button>
+        <p
+          className="text-xs tracking-widest uppercase"
+          style={{ color: '#c4a484', letterSpacing: '0.2em' }}
+        >
+          step 1
+        </p>
+      </div>
 
-        {/* Shared */}
-        <div className="flex flex-col gap-3">
+      {/* Center section */}
+      <div className="flex flex-col items-center w-full max-w-sm">
+        {/* Title */}
+        <h2
+          className="text-xl sm:text-2xl font-normal tracking-wide mb-10 italic"
+          style={{ fontFamily: "'Playfair Display', serif", color: '#8b7355' }}
+        >
+          choose your mode
+        </h2>
+
+        {/* Mode options */}
+        <div className="flex flex-col gap-4 w-full">
+          {/* Solo */}
+          <button
+            onClick={handleSoloMode}
+            className="w-full px-6 py-5 text-left hover:opacity-70 transition-opacity"
+            style={{ border: '1px solid #c4a484', borderRadius: '2px' }}
+          >
+            <p className="text-sm tracking-wide mb-1" style={{ color: '#8b7355' }}>solo</p>
+            <p className="text-xs" style={{ color: '#a08870' }}>take photos by yourself</p>
+          </button>
+
+          {/* Shared */}
           <button
             onClick={handleCreateSession}
-            className="w-full px-8 py-6 border-2 border-gray-200 rounded-2xl hover:border-gray-400 transition-colors text-left"
+            className="w-full px-6 py-5 text-left hover:opacity-70 transition-opacity"
+            style={{ border: '1px solid #c4a484', borderRadius: '2px' }}
           >
-            <p className="text-lg font-medium text-gray-900 mb-1">shared</p>
-            <p className="text-sm text-gray-500">create a session with your partner</p>
+            <p className="text-sm tracking-wide mb-1" style={{ color: '#8b7355' }}>together</p>
+            <p className="text-xs" style={{ color: '#a08870' }}>create a session with your partner</p>
           </button>
 
           {/* Join option */}
-          {!showJoin ? (
-            <button
-              onClick={() => setShowJoin(true)}
-              className="text-sm text-gray-400 hover:text-gray-600 transition-colors"
-            >
-              have a code? join here
-            </button>
-          ) : (
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={joinCode}
-                onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-                placeholder="enter code"
-                maxLength={6}
-                className="flex-1 px-4 py-3 border border-gray-300 rounded-lg text-sm font-mono uppercase focus:outline-none focus:border-gray-500 transition-colors"
-                autoFocus
-              />
+          <div className="mt-4 text-center">
+            {!showJoin ? (
               <button
-                onClick={handleJoinSession}
-                disabled={joinCode.length !== 6}
-                className="px-6 py-3 bg-gray-900 text-white text-sm rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                onClick={() => setShowJoin(true)}
+                className="text-xs tracking-wide underline underline-offset-4 hover:opacity-70 transition-opacity"
+                style={{ color: '#a08870' }}
               >
-                join
+                have a code? join here
               </button>
-            </div>
-          )}
+            ) : (
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={joinCode}
+                  onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+                  placeholder="enter code"
+                  maxLength={6}
+                  className="flex-1 px-4 py-3 text-xs font-mono uppercase tracking-widest focus:outline-none transition-colors text-center"
+                  style={{
+                    border: '1px solid #c4a484',
+                    borderRadius: '2px',
+                    color: '#8b7355'
+                  }}
+                  autoFocus
+                />
+                <button
+                  onClick={handleJoinSession}
+                  disabled={joinCode.length !== 6}
+                  className="px-6 py-3 text-xs tracking-widest uppercase hover:opacity-70 transition-opacity disabled:opacity-30 disabled:cursor-not-allowed"
+                  style={{
+                    border: '1px solid #8b7355',
+                    borderRadius: '2px',
+                    color: '#8b7355'
+                  }}
+                >
+                  join
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Footer */}
       <p
-        className="mt-16 text-xs tracking-wide"
-        style={{ color: '#c4a484' }}
+        className="text-xs tracking-wide"
+        style={{ color: '#d4c4b4' }}
       >
         made with love
       </p>

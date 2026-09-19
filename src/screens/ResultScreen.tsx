@@ -1,6 +1,6 @@
 import type { AppSession } from '../types'
 import { useEffect, useState, useRef, useCallback } from 'react'
-import { ref, remove, onValue } from 'firebase/database'
+import { ref, remove } from 'firebase/database'
 import { database } from '../lib/firebase'
 
 type Props = {
@@ -13,29 +13,15 @@ type PhotoEffect = 'original' | 'vintage' | 'bw'
 export function ResultScreen({ session, setSession }: Props) {
   const [stripDataUrl, setStripDataUrl] = useState<string | null>(null)
   const [showPhoto, setShowPhoto] = useState(false)
-  const [partnerPhotos, setPartnerPhotos] = useState<string[]>([])
   const [effect, setEffect] = useState<PhotoEffect>('original')
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const isInitialLoad = useRef(true)
+  const [hasAnimated, setHasAnimated] = useState(false)
 
   const isSoloMode = session.sessionCode === 'solo'
 
-  // Load partner's photos from Firebase (for paired mode)
-  useEffect(() => {
-    if (isSoloMode || !session.sessionCode) return
-
-    const partnerKey = session.role === 'host' ? 'guestPhotos' : 'hostPhotos'
-    const photosRef = ref(database, `sessions/${session.sessionCode}/${partnerKey}`)
-
-    const unsubscribe = onValue(photosRef, (snapshot) => {
-      if (snapshot.exists()) {
-        const data = snapshot.val()
-        const photos = Object.values(data) as string[]
-        setPartnerPhotos(photos)
-      }
-    })
-
-    return () => unsubscribe()
-  }, [session.sessionCode, session.role, isSoloMode])
+  // Partner photos come from session state (sent via WebRTC data channel)
+  const partnerPhotos = session.partnerPhotos
 
   const loadImage = (src: string): Promise<HTMLImageElement> => {
     return new Promise((resolve, reject) => {
@@ -237,18 +223,32 @@ export function ResultScreen({ session, setSession }: Props) {
     setStripDataUrl(canvas.toDataURL('image/png'))
   }, [session.localPhotos, partnerPhotos, isSoloMode, session.role, effect])
 
-  // Generate strip when photos or effect changes
+  // Generate strip - with delay only on initial load
   useEffect(() => {
-    generateStrip()
+    if (isInitialLoad.current) {
+      const timer = setTimeout(() => {
+        generateStrip()
+      }, 500)
+      return () => clearTimeout(timer)
+    } else {
+      generateStrip()
+    }
   }, [generateStrip])
 
-  // Animate photo appearance
+  // Show photo after strip is ready
   useEffect(() => {
     if (stripDataUrl) {
-      const timer = setTimeout(() => {
+      if (isInitialLoad.current) {
+        const timer = setTimeout(() => {
+          setShowPhoto(true)
+          isInitialLoad.current = false
+          // Mark animation as complete after it finishes
+          setTimeout(() => setHasAnimated(true), 2000)
+        }, 1000)
+        return () => clearTimeout(timer)
+      } else {
         setShowPhoto(true)
-      }, 600)
-      return () => clearTimeout(timer)
+      }
     }
   }, [stripDataUrl])
 
@@ -271,140 +271,131 @@ export function ResultScreen({ session, setSession }: Props) {
       role: null,
       sessionCode: null,
       localPhotos: [],
+      partnerPhotos: [],
     })
   }
 
   return (
     <div
-      className="flex flex-1 flex-col items-center justify-center min-h-screen px-4 py-8"
+      className="flex flex-1 flex-col items-center justify-between min-h-screen px-4 py-12"
       style={{ backgroundColor: '#faf8f5' }}
     >
       <canvas ref={canvasRef} className="hidden" />
 
-      {/* Title */}
-      <h1
-        className="text-2xl sm:text-3xl font-normal tracking-wide mb-6"
-        style={{ fontFamily: "'Playfair Display', serif", color: '#8b7355' }}
-      >
-        your photos
-      </h1>
+      {/* Top spacer */}
+      <div />
 
-      {/* Effect selector */}
-      <div className="flex gap-2 mb-6">
-        <button
-          onClick={() => setEffect('original')}
-          className={`px-4 py-2 text-xs font-light tracking-wide rounded-full transition-all ${
-            effect === 'original'
-              ? 'bg-gray-900 text-white'
-              : 'bg-transparent text-gray-500 border border-gray-300'
-          }`}
+      {/* Center section */}
+      <div className="flex flex-col items-center">
+        {/* Title */}
+        <h1
+          className="text-xl sm:text-2xl font-normal tracking-wide mb-6 italic"
+          style={{ fontFamily: "'Playfair Display', serif", color: '#8b7355' }}
         >
-          original
-        </button>
-        <button
-          onClick={() => setEffect('bw')}
-          className={`px-4 py-2 text-xs font-light tracking-wide rounded-full transition-all ${
-            effect === 'bw'
-              ? 'bg-gray-700 text-white'
-              : 'bg-transparent text-gray-500 border border-gray-300'
-          }`}
-        >
-          b&w
-        </button>
-        <button
-          onClick={() => setEffect('vintage')}
-          className={`px-4 py-2 text-xs font-light tracking-wide rounded-full transition-all ${
-            effect === 'vintage'
-              ? 'text-white'
-              : 'bg-transparent border'
-          }`}
-          style={{
-            backgroundColor: effect === 'vintage' ? '#8b7355' : 'transparent',
-            borderColor: effect === 'vintage' ? '#8b7355' : '#c4a484',
-            color: effect === 'vintage' ? 'white' : '#8b7355'
-          }}
-        >
-          vintage
-        </button>
-      </div>
+          photos delivered
+        </h1>
 
-      {/* Photo frame box */}
-      <div
-        className="relative rounded-3xl p-4 sm:p-6 mb-8 transition-all duration-500"
-        style={{
-          backgroundColor: '#e8e0d5',
-          boxShadow: '0 8px 32px rgba(139, 115, 85, 0.15), inset 0 1px 0 rgba(255,255,255,0.5)'
-        }}
-      >
-        {/* Inner frame */}
-        <div
-          className="rounded-2xl overflow-hidden"
-          style={{
-            backgroundColor: '#3d3630',
-            padding: '12px',
-            boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.3)'
-          }}
-        >
-          {stripDataUrl ? (
+        {/* Effect selector */}
+        <div className="flex gap-6 mb-6">
+          <button
+            onClick={() => setEffect('original')}
+            className="text-xs tracking-wide transition-all"
+            style={{
+              color: effect === 'original' ? '#8b7355' : '#a08870',
+              textDecoration: effect === 'original' ? 'underline' : 'none',
+              textUnderlineOffset: '4px'
+            }}
+          >
+            original
+          </button>
+          <button
+            onClick={() => setEffect('bw')}
+            className="text-xs tracking-wide transition-all"
+            style={{
+              color: effect === 'bw' ? '#8b7355' : '#a08870',
+              textDecoration: effect === 'bw' ? 'underline' : 'none',
+              textUnderlineOffset: '4px'
+            }}
+          >
+            b&w
+          </button>
+          <button
+            onClick={() => setEffect('vintage')}
+            className="text-xs tracking-wide transition-all"
+            style={{
+              color: effect === 'vintage' ? '#8b7355' : '#a08870',
+              textDecoration: effect === 'vintage' ? 'underline' : 'none',
+              textUnderlineOffset: '4px'
+            }}
+          >
+            vintage
+          </button>
+        </div>
+
+        {/* Photo frame box - only show when photo is ready */}
+        {stripDataUrl && showPhoto ? (
+          <div
+            className={`relative p-3 sm:p-4 mb-8 ${!hasAnimated ? 'animate-slide-down' : ''}`}
+            style={{
+              backgroundColor: '#e8e0d5',
+              borderRadius: '4px'
+            }}
+          >
+            {/* Inner frame */}
             <div
-              className="transition-all duration-[2000ms] ease-out"
               style={{
-                transform: showPhoto ? 'translateY(0)' : 'translateY(-100%)',
-                opacity: showPhoto ? 1 : 0,
+                backgroundColor: '#2a2520',
+                padding: '8px',
+                borderRadius: '2px'
               }}
             >
               <img
                 src={stripDataUrl}
                 alt="photo strip"
-                className="rounded-lg"
-                style={{ maxHeight: '50vh', width: 'auto' }}
+                style={{ maxHeight: '50vh', width: 'auto', borderRadius: '2px' }}
               />
             </div>
-          ) : (
-            <div
-              className="flex items-center justify-center rounded-lg"
-              style={{
-                height: '300px',
-                width: '200px',
-                backgroundColor: '#2a2520'
-              }}
-            >
-              <div
-                className="w-8 h-8 border-2 rounded-full animate-spin"
-                style={{ borderColor: '#8b7355', borderTopColor: '#c4a484' }}
-              />
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Actions */}
-      {showPhoto && (
-        <div className="flex gap-4 transition-opacity duration-500">
-          <button
-            onClick={handleDownload}
-            className="px-8 py-3 text-white text-sm font-light tracking-wide rounded-full hover:opacity-90 transition-opacity"
-            style={{ backgroundColor: '#8b7355' }}
-          >
-            download
-          </button>
-          <button
-            onClick={handleNewSession}
-            className="px-8 py-3 text-sm font-light tracking-wide rounded-full transition-colors"
+          </div>
+        ) : (
+          <div
+            className="flex items-center justify-center mb-8"
             style={{
-              color: '#8b7355',
-              border: '1px solid #c4a484'
+              height: '300px',
+              width: '200px'
             }}
           >
-            new session
-          </button>
-        </div>
-      )}
+            <div
+              className="w-6 h-6 border rounded-full animate-spin"
+              style={{ borderColor: '#8b7355', borderTopColor: '#c4a484' }}
+            />
+          </div>
+        )}
+
+        {/* Actions */}
+        {showPhoto && (
+          <div className="flex gap-6 transition-opacity duration-500">
+            <button
+              onClick={handleDownload}
+              className="text-xs tracking-widest uppercase underline underline-offset-4 hover:opacity-70 transition-opacity"
+              style={{ color: '#8b7355' }}
+            >
+              download
+            </button>
+            <button
+              onClick={handleNewSession}
+              className="text-xs tracking-widest uppercase underline underline-offset-4 hover:opacity-70 transition-opacity"
+              style={{ color: '#a08870' }}
+            >
+              new session
+            </button>
+          </div>
+        )}
+      </div>
 
       {/* Footer */}
       <p
-        className="mt-12 text-xs tracking-wide"
-        style={{ color: '#c4a484' }}
+        className="text-xs tracking-wide"
+        style={{ color: '#d4c4b4' }}
       >
         made with love
       </p>
