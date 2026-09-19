@@ -89,7 +89,7 @@ export function ChooseModeScreen({ setSession }: Props) {
   return (
     <div className="flex flex-1 flex-col items-center justify-between min-h-screen px-4 py-12">
       {/* Top section */}
-      <div className="flex items-center justify-between w-full">
+      <div className="flex items-center justify-between w-full pr-14">
         <button
           onClick={handleBack}
           className="text-xs tracking-widest uppercase hover:opacity-70 transition-opacity"

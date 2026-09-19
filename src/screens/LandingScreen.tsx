@@ -22,11 +22,11 @@ export function LandingScreen({ setSession }: Props) {
       {/* Center section - Booth + Start */}
       <div className="flex flex-col items-center">
         {/* Booth design */}
-        <div className="mb-10">
+        <div className="mb-6">
           <img
             src="/photobooth.svg"
             alt="photobooth"
-            className="w-full max-w-sm h-auto"
+            className="w-full max-w-[280px] sm:max-w-sm h-auto"
           />
         </div>
 
