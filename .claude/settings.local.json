@@ -18,7 +18,13 @@
       "WebFetch(domain:lensbooth.app)",
       "Bash(tree:*)",
       "Bash(npx tsc:*)",
-      "WebFetch(domain:flashbulbphotobooth.com)"
+      "WebFetch(domain:flashbulbphotobooth.com)",
+      "WebFetch(domain:www.fluxphotoboothcompany.com)",
+      "WebFetch(domain:pin.it)",
+      "WebFetch(domain:api.pinterest.com)",
+      "WebFetch(domain:www.pinterest.com)",
+      "WebSearch",
+      "WebFetch(domain:gridfiti.com)"
     ]
   }
 }

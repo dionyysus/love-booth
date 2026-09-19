@@ -123,7 +123,7 @@ export function ResultScreen({ session, setSession }: Props) {
     ctx.putImageData(imageData, x, y)
   }
 
-  // Apply vintage photobooth effect (Booth by Bryant style - grainy B&W with warm tint + flash)
+  // Apply vintage photobooth effect (Booth by Bryant style - warm sepia B&W with film quality)
   const applyVintageEffect = (ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number) => {
     const imageData = ctx.getImageData(x, y, width, height)
     const data = imageData.data
@@ -141,39 +141,31 @@ export function ResultScreen({ session, setSession }: Props) {
       const g = data[i + 1]
       const b = data[i + 2]
 
-      // Convert to grayscale
+      // Convert to grayscale with film-like luminance
       let gray = (r * 0.299) + (g * 0.587) + (b * 0.114)
 
-      // Calculate distance from center for flash/vignette effect
+      // Subtle vignette - very soft edge darkening
       const dx = px - centerX
       const dy = py - centerY
       const dist = Math.sqrt(dx * dx + dy * dy)
       const normalizedDist = dist / maxDist
+      const vignette = 1 - (normalizedDist * normalizedDist * 0.12)
 
-      // Flash effect - brighten center, darken edges (vignette)
-      const flashBoost = (1 - normalizedDist * normalizedDist) * 25 // Bright center
-      const vignette = 1 - (normalizedDist * normalizedDist * 0.3) // Darker edges
-
-      gray = gray + flashBoost
       gray = gray * vignette
 
-      // Increase contrast for punchy blacks (S-curve approximation)
-      gray = gray / 255
-      gray = gray * gray * (3 - 2 * gray) // Smooth S-curve
-      gray = gray * 255
-
-      // Boost contrast more
-      gray = ((gray - 128) * 1.2) + 128
+      // Bold contrast for flash photography look
+      gray = ((gray - 128) * 1.25) + 128
       gray = Math.max(0, Math.min(255, gray))
 
-      // Add film grain
-      const grain = (Math.random() - 0.5) * 30
+      // Very subtle film grain
+      const grain = (Math.random() - 0.5) * 8
       gray = Math.max(0, Math.min(255, gray + grain))
 
-      // Slight warm tint (cream whites, warm shadows)
-      let newR = gray + 10
-      let newG = gray + 5
-      let newB = gray - 8
+      // Warm sepia toning (50-60% warmth as per Booth by Bryant style)
+      // Apply sepia by adding warm tones - more red, some green, less blue
+      let newR = gray * 1.08  // Boost red channel
+      let newG = gray * 1.02  // Slight green boost
+      let newB = gray * 0.88  // Reduce blue for warmth
 
       // Clamp values
       data[i] = Math.max(0, Math.min(255, newR))
@@ -255,7 +247,7 @@ export function ResultScreen({ session, setSession }: Props) {
     if (stripDataUrl) {
       const timer = setTimeout(() => {
         setShowPhoto(true)
-      }, 300)
+      }, 600)
       return () => clearTimeout(timer)
     }
   }, [stripDataUrl])
@@ -355,7 +347,7 @@ export function ResultScreen({ session, setSession }: Props) {
         >
           {stripDataUrl ? (
             <div
-              className="transition-all duration-1000 ease-out"
+              className="transition-all duration-[2000ms] ease-out"
               style={{
                 transform: showPhoto ? 'translateY(0)' : 'translateY(-100%)',
                 opacity: showPhoto ? 1 : 0,
