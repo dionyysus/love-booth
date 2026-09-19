@@ -44,21 +44,16 @@ input[type="number"]::-webkit-outer-spin-button {
   margin: 0;
 }
 
-/* Photo delivery animation - slides in from top */
+/* Photo delivery animation - slides down from inside the machine */
 @keyframes slideDown {
   0% {
-    transform: translateY(-100vh);
-    opacity: 0;
-  }
-  10% {
-    opacity: 1;
+    transform: translateY(-100%);
   }
   100% {
     transform: translateY(0);
-    opacity: 1;
   }
 }
 
 .animate-slide-down {
-  animation: slideDown 1.5s ease-out forwards;
+  animation: slideDown 2s ease-out forwards;
 }

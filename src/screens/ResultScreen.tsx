@@ -332,44 +332,75 @@ export function ResultScreen({ session, setSession }: Props) {
           </button>
         </div>
 
-        {/* Photo frame box - only show when photo is ready */}
-        {stripDataUrl && showPhoto ? (
+        {/* Photobooth Machine */}
+        <div className="relative mb-8">
+          {/* Machine Body */}
           <div
-            className={`relative p-3 sm:p-4 mb-8 ${!hasAnimated ? 'animate-slide-down' : ''}`}
+            className="relative"
             style={{
-              backgroundColor: '#e8e0d5',
-              borderRadius: '4px'
+              backgroundColor: '#d4c4b0',
+              borderRadius: '12px 12px 0 0',
+              padding: '20px 24px 0 24px',
+              boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.3), inset 0 -2px 4px rgba(0,0,0,0.1)',
+              minWidth: '280px',
             }}
           >
-            {/* Inner frame */}
+            {/* Machine top decoration */}
             <div
+              className="absolute top-3 left-1/2 -translate-x-1/2 w-16 h-2 rounded-full"
+              style={{ backgroundColor: '#b8a896' }}
+            />
+
+            {/* Machine label */}
+            <p
+              className="text-center text-xs tracking-widest uppercase mt-4 mb-4"
+              style={{ color: '#8b7355', letterSpacing: '0.15em' }}
+            >
+              photobooth
+            </p>
+
+            {/* Slot area - where photo comes out */}
+            <div
+              className="relative overflow-hidden flex justify-center"
               style={{
                 backgroundColor: '#2a2520',
-                padding: '8px',
-                borderRadius: '2px'
+                borderRadius: '4px 4px 0 0',
+                padding: '8px 8px 0 8px',
+                minHeight: '45vh',
               }}
             >
-              <img
-                src={stripDataUrl}
-                alt="photo strip"
-                style={{ maxHeight: '50vh', width: 'auto', borderRadius: '2px' }}
-              />
+              {stripDataUrl && showPhoto ? (
+                <div className={!hasAnimated ? 'animate-slide-down' : ''}>
+                  <img
+                    src={stripDataUrl}
+                    alt="photo strip"
+                    style={{ maxHeight: '50vh', width: 'auto', borderRadius: '2px 2px 0 0' }}
+                  />
+                </div>
+              ) : (
+                <div
+                  className="flex items-center justify-center w-full"
+                  style={{ height: '45vh' }}
+                >
+                  <div
+                    className="w-5 h-5 border-2 rounded-full animate-spin"
+                    style={{ borderColor: '#5a4a3a', borderTopColor: '#c4a484' }}
+                  />
+                </div>
+              )}
             </div>
           </div>
-        ) : (
+
+          {/* Machine base / photo exit */}
           <div
-            className="flex items-center justify-center mb-8"
             style={{
-              height: '300px',
-              width: '200px'
+              backgroundColor: '#c4b4a0',
+              height: '16px',
+              borderRadius: '0 0 8px 8px',
+              boxShadow: '0 4px 8px rgba(0,0,0,0.15)',
             }}
-          >
-            <div
-              className="w-6 h-6 border rounded-full animate-spin"
-              style={{ borderColor: '#8b7355', borderTopColor: '#c4a484' }}
-            />
-          </div>
-        )}
+          />
+        </div>
 
         {/* Actions */}
         {showPhoto && (
