@@ -3,13 +3,30 @@ import { ref, onValue, set, remove, onChildAdded } from 'firebase/database'
 import { database } from '../lib/firebase'
 import type { ParticipantRole } from '../types'
 
-// Free STUN servers for NAT traversal
+// ICE servers for NAT traversal (STUN + free TURN)
 const ICE_SERVERS = {
   iceServers: [
     { urls: 'stun:stun.l.google.com:19302' },
     { urls: 'stun:stun1.l.google.com:19302' },
-    { urls: 'stun:stun2.l.google.com:19302' },
+    { urls: 'stun:stun.relay.metered.ca:80' },
+    // Free TURN servers from OpenRelay
+    {
+      urls: 'turn:openrelay.metered.ca:80',
+      username: 'openrelayproject',
+      credential: 'openrelayproject',
+    },
+    {
+      urls: 'turn:openrelay.metered.ca:443',
+      username: 'openrelayproject',
+      credential: 'openrelayproject',
+    },
+    {
+      urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+      username: 'openrelayproject',
+      credential: 'openrelayproject',
+    },
   ],
+  iceCandidatePoolSize: 10,
 }
 
 type WebRTCState = 'idle' | 'connecting' | 'connected' | 'failed'
@@ -179,19 +196,36 @@ export function useWebRTC(
     }
 
     pc.oniceconnectionstatechange = () => {
+      console.log('ICE connection state:', pc.iceConnectionState)
       if (pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed') {
         setState('connected')
-      } else if (pc.iceConnectionState === 'failed' || pc.iceConnectionState === 'disconnected') {
-        setState('failed')
+      } else if (pc.iceConnectionState === 'failed') {
+        // Try ICE restart
+        console.log('ICE failed, attempting restart...')
+        pc.restartIce()
+        setState('connecting')
+      } else if (pc.iceConnectionState === 'disconnected') {
+        // Wait a moment before marking as failed (might reconnect)
+        setTimeout(() => {
+          if (pc.iceConnectionState === 'disconnected') {
+            setState('failed')
+          }
+        }, 5000)
       }
     }
 
     pc.onconnectionstatechange = () => {
+      console.log('Connection state:', pc.connectionState)
       if (pc.connectionState === 'connected') {
         setState('connected')
       } else if (pc.connectionState === 'failed') {
+        console.log('Connection failed')
         setState('failed')
       }
+    }
+
+    pc.onicegatheringstatechange = () => {
+      console.log('ICE gathering state:', pc.iceGatheringState)
     }
 
     peerConnectionRef.current = pc
@@ -240,9 +274,26 @@ export function useWebRTC(
           const offer = await pc.createOffer()
           await pc.setLocalDescription(offer)
 
+          // Wait for ICE gathering to complete or timeout
+          await new Promise<void>((resolve) => {
+            if (pc.iceGatheringState === 'complete') {
+              resolve()
+            } else {
+              const checkState = () => {
+                if (pc.iceGatheringState === 'complete') {
+                  pc.removeEventListener('icegatheringstatechange', checkState)
+                  resolve()
+                }
+              }
+              pc.addEventListener('icegatheringstatechange', checkState)
+              // Timeout after 3 seconds
+              setTimeout(resolve, 3000)
+            }
+          })
+
           await set(ref(database, `sessions/${sessionCode}/webrtc/offer`), {
-            type: offer.type,
-            sdp: offer.sdp,
+            type: pc.localDescription?.type,
+            sdp: pc.localDescription?.sdp,
           })
         } catch (err) {
           console.error('Error creating offer:', err)
@@ -277,9 +328,26 @@ export function useWebRTC(
           const answer = await pc.createAnswer()
           await pc.setLocalDescription(answer)
 
+          // Wait for ICE gathering to complete or timeout
+          await new Promise<void>((resolve) => {
+            if (pc.iceGatheringState === 'complete') {
+              resolve()
+            } else {
+              const checkState = () => {
+                if (pc.iceGatheringState === 'complete') {
+                  pc.removeEventListener('icegatheringstatechange', checkState)
+                  resolve()
+                }
+              }
+              pc.addEventListener('icegatheringstatechange', checkState)
+              // Timeout after 3 seconds
+              setTimeout(resolve, 3000)
+            }
+          })
+
           await set(ref(database, `sessions/${sessionCode}/webrtc/answer`), {
-            type: answer.type,
-            sdp: answer.sdp,
+            type: pc.localDescription?.type,
+            sdp: pc.localDescription?.sdp,
           })
         } catch (err) {
           console.error('Error answering:', err)
