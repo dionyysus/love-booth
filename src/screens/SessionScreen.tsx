@@ -2,7 +2,7 @@ import type { AppSession, SessionData } from '../types'
 import { useEffect, useState, useRef } from 'react'
 import { useCamera } from '../hooks/useCamera'
 import { useWebRTC } from '../hooks/useWebRTC'
-import { ref, onValue, set } from 'firebase/database'
+import { ref, onValue, set, update } from 'firebase/database'
 import { database } from '../lib/firebase'
 
 type Props = {
@@ -97,8 +97,8 @@ export function SessionScreen({ session, setSession }: Props) {
       for (let shot = 0; shot < SHOTS_COUNT; shot++) {
         // Countdown 3-2-1
         for (let i = COUNTDOWN_SECONDS; i > 0; i--) {
-          await set(sessionRef, {
-            ...sessionData,
+          // Use update() instead of set() to preserve photos
+          await update(sessionRef, {
             countdown: i,
             currentShot: shot,
             status: 'capturing',
@@ -108,8 +108,7 @@ export function SessionScreen({ session, setSession }: Props) {
         }
 
         // Capture moment
-        await set(sessionRef, {
-          ...sessionData,
+        await update(sessionRef, {
           countdown: 0,
           currentShot: shot,
           status: 'capturing',
@@ -125,8 +124,7 @@ export function SessionScreen({ session, setSession }: Props) {
       }
 
       // Done
-      await set(sessionRef, {
-        ...sessionData,
+      await update(sessionRef, {
         countdown: null,
         currentShot: SHOTS_COUNT,
         status: 'complete',
@@ -214,8 +212,7 @@ export function SessionScreen({ session, setSession }: Props) {
     // Paired mode - mark as ready
     if (!session.sessionCode || !sessionData) return
 
-    await set(ref(database, `sessions/${session.sessionCode}`), {
-      ...sessionData,
+    await update(ref(database, `sessions/${session.sessionCode}`), {
       [session.role === 'host' ? 'hostReady' : 'guestReady']: true,
       lastUpdate: Date.now(),
     })
