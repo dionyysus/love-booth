@@ -24,7 +24,8 @@
       "WebFetch(domain:api.pinterest.com)",
       "WebFetch(domain:www.pinterest.com)",
       "WebSearch",
-      "WebFetch(domain:gridfiti.com)"
+      "WebFetch(domain:gridfiti.com)",
+      "Bash(git checkout:*)"
     ]
   }
 }
