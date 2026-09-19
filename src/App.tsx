@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { AppSession } from './types'
 import { initialAppSession } from './types'
 import { LandingScreen } from './screens/LandingScreen'
+import { ChooseModeScreen } from './screens/ChooseModeScreen'
 import { WaitingRoomScreen } from './screens/WaitingRoomScreen'
 import { SessionScreen } from './screens/SessionScreen'
 import { ResultScreen } from './screens/ResultScreen'
@@ -13,6 +14,8 @@ function App() {
     switch (session.screen) {
       case 'landing':
         return <LandingScreen setSession={setSession} />
+      case 'choose':
+        return <ChooseModeScreen setSession={setSession} />
       case 'waiting':
         return <WaitingRoomScreen session={session} setSession={setSession} />
       case 'session':

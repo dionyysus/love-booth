@@ -29,6 +29,7 @@ export function SessionScreen({ session, setSession }: Props) {
     stream
   )
   const partnerVideoRef = useRef<HTMLVideoElement | null>(null)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   // Use Set to track which shots have been captured - bulletproof against duplicates
   const capturedShotsSet = useRef(new Set<number>())
@@ -162,13 +163,13 @@ export function SessionScreen({ session, setSession }: Props) {
       const video = videoRef.current
       if (video) {
         const canvas = document.createElement('canvas')
-        canvas.width = 400
-        canvas.height = 500
+        canvas.width = 600
+        canvas.height = 750
         const ctx = canvas.getContext('2d')
         if (ctx) {
           ctx.scale(-1, 1)
-          ctx.drawImage(video, -400, 0, 400, 500)
-          const compressed = canvas.toDataURL('image/jpeg', 0.75)
+          ctx.drawImage(video, -600, 0, 600, 750)
+          const compressed = canvas.toDataURL('image/jpeg', 0.85)
           set(ref(database, `sessions/${session.sessionCode}/${photoKey}/${currentShot}`), compressed)
         }
       }
@@ -216,6 +217,60 @@ export function SessionScreen({ session, setSession }: Props) {
       [session.role === 'host' ? 'hostReady' : 'guestReady']: true,
       lastUpdate: Date.now(),
     })
+  }
+
+  // Handle photo upload
+  const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (!files) return
+
+    const remainingSlots = SHOTS_COUNT - capturedPhotosRef.current.length
+    const filesToProcess = Array.from(files).slice(0, remainingSlots)
+
+    filesToProcess.forEach((file) => {
+      const reader = new FileReader()
+      reader.onload = (event) => {
+        const dataUrl = event.target?.result as string
+        if (dataUrl && capturedPhotosRef.current.length < SHOTS_COUNT) {
+          capturedPhotosRef.current.push(dataUrl)
+          setLocalPhotos([...capturedPhotosRef.current])
+
+          // Upload to Firebase for partner (if paired mode)
+          if (session.sessionCode && !isSoloMode) {
+            const photoKey = session.role === 'host' ? 'hostPhotos' : 'guestPhotos'
+            const shotIndex = capturedPhotosRef.current.length - 1
+
+            // Compress and upload
+            const img = new Image()
+            img.onload = () => {
+              const canvas = document.createElement('canvas')
+              canvas.width = 600
+              canvas.height = 750
+              const ctx = canvas.getContext('2d')
+              if (ctx) {
+                ctx.drawImage(img, 0, 0, 600, 750)
+                const compressed = canvas.toDataURL('image/jpeg', 0.85)
+                set(ref(database, `sessions/${session.sessionCode}/${photoKey}/${shotIndex}`), compressed)
+              }
+            }
+            img.src = dataUrl
+          }
+
+          // If we have all 4 photos, go to result
+          if (capturedPhotosRef.current.length >= SHOTS_COUNT) {
+            if (isSoloMode) {
+              setSession(s => ({ ...s, screen: 'result', localPhotos: capturedPhotosRef.current }))
+            }
+          }
+        }
+      }
+      reader.readAsDataURL(file)
+    })
+
+    // Reset input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
   }
 
   const bothReady = sessionData?.hostReady && sessionData?.guestReady
@@ -302,15 +357,43 @@ export function SessionScreen({ session, setSession }: Props) {
         </div>
       )}
 
-      {/* Ready button */}
+      {/* Ready button and upload option */}
       {!bothReady && !isCapturing && (
-        <button
-          onClick={handleReady}
-          disabled={isReady || status !== 'active'}
-          className="px-12 py-4 bg-white text-black text-sm font-light tracking-widest hover:bg-gray-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-        >
-          {isSoloMode ? 'ready' : (isReady ? 'waiting...' : 'ready')}
-        </button>
+        <div className="flex flex-col items-center gap-4">
+          <button
+            onClick={handleReady}
+            disabled={isReady || status !== 'active'}
+            className="px-12 py-4 bg-white text-black text-sm font-light tracking-widest hover:bg-gray-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+          >
+            {isSoloMode ? 'ready' : (isReady ? 'waiting...' : 'ready')}
+          </button>
+
+          {/* Upload photos option */}
+          <div className="flex items-center gap-2 text-white/50 text-sm">
+            <span>or</span>
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="text-white/70 hover:text-white underline transition-colors"
+            >
+              upload photos
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={handleUpload}
+              className="hidden"
+            />
+          </div>
+
+          {/* Show uploaded count if any */}
+          {localPhotos.length > 0 && (
+            <p className="text-white/50 text-xs">
+              {localPhotos.length} of {SHOTS_COUNT} photos added
+            </p>
+          )}
+        </div>
       )}
 
       {/* Progress dots */}

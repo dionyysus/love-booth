@@ -1,4 +1,4 @@
-export type Screen = 'landing' | 'waiting' | 'session' | 'result'
+export type Screen = 'landing' | 'choose' | 'waiting' | 'session' | 'result'
 
 export type ParticipantRole = 'host' | 'guest'
 
