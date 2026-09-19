@@ -254,13 +254,40 @@ export function ResultScreen({ session, setSession }: Props) {
     }
   }, [stripDataUrl])
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (!stripDataUrl) return
 
+    const filename = `photobooth-${effect}-${Date.now()}.png`
+
+    // Convert data URL to blob
+    const response = await fetch(stripDataUrl)
+    const blob = await response.blob()
+
+    // Try Web Share API first (works great on mobile)
+    if (navigator.share && navigator.canShare) {
+      const file = new File([blob], filename, { type: 'image/png' })
+      const shareData = { files: [file] }
+
+      if (navigator.canShare(shareData)) {
+        try {
+          await navigator.share(shareData)
+          return
+        } catch (err) {
+          // User cancelled or share failed, fall through to download
+          if ((err as Error).name === 'AbortError') return
+        }
+      }
+    }
+
+    // Fallback: Create blob URL and download
+    const blobUrl = URL.createObjectURL(blob)
     const link = document.createElement('a')
-    link.download = `photobooth-${effect}-${Date.now()}.png`
-    link.href = stripDataUrl
+    link.download = filename
+    link.href = blobUrl
+    document.body.appendChild(link)
     link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(blobUrl)
   }
 
   const handleNewSession = async () => {
