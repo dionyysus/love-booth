@@ -148,8 +148,10 @@ export function SessionScreen({ session, setSession }: Props) {
     runCapture()
   }, [sessionData, session.role, session.sessionCode, isSoloMode])
 
-  // Capture photo when countdown hits 0 - BULLETPROOF version
+  // Capture photo when countdown hits 0 - PAIRED MODE ONLY
+  // Solo mode handles capture directly in handleReady to avoid race conditions
   useEffect(() => {
+    if (isSoloMode) return // Solo mode captures in handleReady
     if (countdown !== 0) return
     if (status !== 'active') return
 
@@ -168,19 +170,17 @@ export function SessionScreen({ session, setSession }: Props) {
     setLocalPhotos([...capturedPhotosRef.current])
 
     // Send photo to partner via WebRTC data channel
-    if (!isSoloMode) {
-      const video = videoRef.current
-      if (video) {
-        const canvas = document.createElement('canvas')
-        canvas.width = 600
-        canvas.height = 750
-        const ctx = canvas.getContext('2d')
-        if (ctx) {
-          ctx.scale(-1, 1)
-          ctx.drawImage(video, -600, 0, 600, 750)
-          const compressed = canvas.toDataURL('image/jpeg', 0.85)
-          sendPhoto(compressed, currentShot)
-        }
+    const video = videoRef.current
+    if (video) {
+      const canvas = document.createElement('canvas')
+      canvas.width = 600
+      canvas.height = 750
+      const ctx = canvas.getContext('2d')
+      if (ctx) {
+        ctx.scale(-1, 1)
+        ctx.drawImage(video, -600, 0, 600, 750)
+        const compressed = canvas.toDataURL('image/jpeg', 0.85)
+        sendPhoto(compressed, currentShot)
       }
     }
   }, [countdown, status, currentShot, captureFrame, isSoloMode, videoRef, sendPhoto])
